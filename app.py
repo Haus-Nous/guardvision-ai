@@ -23,7 +23,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for compact zero-scroll layout
+# Custom CSS for compact responsive layout
 st.markdown("""
 <style>
     .block-container {
@@ -916,7 +916,7 @@ else:
 
 
 # -----------------------------------------------------------------------------
-# Collapsible Educational & Mathematical Foundations (Zero-Scroll Friendly)
+# Collapsible Educational & Mathematical Foundations
 # -----------------------------------------------------------------------------
 render_academic_theory(module)
 

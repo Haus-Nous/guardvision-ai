@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GuardVision Lab | DIP & CV Presentation Platform</title>
+    <title>GuardVision Lab | Digital Image Processing & Computer Vision</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- TensorFlow.js & BlazeFace for in-browser real-time Face & Feature Localization -->
@@ -30,14 +30,23 @@
         ::-webkit-scrollbar-track { background: #090D16; }
         ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
+        
         .badge { background: #1E293B; color: #38BDF8; font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #334155; }
         .badge-green { background: #064E3B; color: #34D399; font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #059669; }
         .badge-amber { background: #78350F; color: #FBBF24; font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #D97706; }
+        
         canvas, video { border-radius: 8px; border: 1px solid #1E293B; background: #020617; }
-        .module-btn { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 0.82rem; border-radius: 6px; color: #94A3B8; transition: all 0.15s ease; border: 1px solid transparent; }
-        .module-btn:hover { background-color: #1E293B; color: #F8FAFC; }
-        .module-btn.active { background-color: #1E293B; color: #38BDF8; font-weight: 600; border-color: rgba(56, 189, 248, 0.4); box-shadow: 0 0 10px rgba(56, 189, 248, 0.1); }
+        
         input[type=range] { accent-color: #38BDF8; }
+        select, input[type=text], input[type=number] {
+            background-color: #0F172A;
+            border: 1px solid #334155;
+            color: #F8FAFC;
+        }
+        select:focus, input:focus {
+            outline: none;
+            border-color: #38BDF8;
+        }
     </style>
 </head>
 <body class="bg-darkBg text-slate-100 min-h-screen font-sans antialiased flex flex-col">
@@ -48,16 +57,16 @@
             <span class="text-2xl">👁️</span>
             <div>
                 <div class="flex items-center space-x-2">
-                    <h1 class="text-base font-bold text-white tracking-tight">GuardVision Lab</h1>
-                    <span class="badge">Vercel Live Production</span>
+                    <h1 class="text-base font-bold text-white tracking-tight">GuardVision Lab: Side-by-Side DIP & CV Studio</h1>
+                    <span class="badge">Live Production</span>
                 </div>
-                <p class="text-[11px] text-slate-400">Digital Image Processing & Computer Vision Interactive Presentation Platform</p>
+                <p class="text-[11px] text-slate-400">Live Laptop Webcam Signal Processing Workbench</p>
             </div>
         </div>
         <div class="flex items-center space-x-2.5">
             <span class="badge hidden sm:inline-block">OpenCV 4.14</span>
-            <span class="badge hidden sm:inline-block">WebRTC Hardware Ingestion</span>
-            <span class="badge hidden sm:inline-block">Zero-Scroll Side-by-Side</span>
+            <span class="badge hidden sm:inline-block">30 FPS Live Stream</span>
+            <span class="badge hidden sm:inline-block">Side-by-Side View</span>
             <a href="https://github.com/Haus-Nous/guardvision-ai" target="_blank" class="bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold px-3 py-1.5 rounded text-xs transition flex items-center space-x-1.5">
                 <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
                 <span>GitHub Repo</span>
@@ -65,11 +74,13 @@
         </div>
     </header>
 
-    <!-- Main Workspace: Sidebar + Center Stage -->
-    <div class="flex-1 flex flex-col md:flex-row overflow-hidden">
+    <!-- Main Workspace: Sidebar + Central Content Area -->
+    <div class="flex-1 flex flex-col md:flex-row overflow-x-hidden">
 
-        <!-- LEFT SIDEBAR: CAMERA CONTROLS + 9 MODULES + PARAMETER TUNING -->
-        <aside class="w-full md:w-80 lg:w-84 bg-sidebarBg border-r border-borderCol p-4 overflow-y-auto flex-shrink-0 flex flex-col space-y-4">
+        <!-- ==================================================================== -->
+        <!-- LEFT SIDEBAR: CAMERA CONTROLS + 9 MODULES + PARAMETER TUNING        -->
+        <!-- ==================================================================== -->
+        <aside class="w-full md:w-80 lg:w-84 bg-sidebarBg border-r border-borderCol p-4 flex-shrink-0 flex flex-col space-y-4">
             
             <!-- Camera & Ingestion Section -->
             <div class="bg-cardBg border border-borderCol rounded-lg p-3.5">
@@ -79,22 +90,47 @@
                 </h2>
                 
                 <div class="space-y-3">
-                    <button id="toggleCamBtn" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2 px-3 rounded text-xs transition flex items-center justify-center space-x-1.5 shadow">
-                        <span>▶️</span>
-                        <span id="camBtnText">Activate Camera Feed</span>
-                    </button>
-
-                    <div class="flex items-center justify-between text-xs text-slate-300">
-                        <label for="mirrorToggle" class="cursor-pointer flex items-center space-x-2">
-                            <input type="checkbox" id="mirrorToggle" checked class="rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-0">
-                            <span>🪞 Mirror Webcam</span>
-                        </label>
-                        <span id="camStatusBadge" class="badge-amber">Camera Idle</span>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Camera Ingestion Mode</label>
+                        <div class="space-y-1.5 text-xs text-slate-300" id="ingestionRadios">
+                            <label class="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-slate-800">
+                                <input type="radio" name="cam_mode" value="stream" checked class="text-sky-500 focus:ring-0">
+                                <span>🎥 Live Laptop Webcam (Continuous Stream)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-slate-800">
+                                <input type="radio" name="cam_mode" value="snapshot" class="text-sky-500 focus:ring-0">
+                                <span>📸 Browser Camera Snapshot (Multi-Filter)</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-slate-800">
+                                <input type="radio" name="cam_mode" value="synthetic" class="text-sky-500 focus:ring-0">
+                                <span>🧪 Synthetic Demo Generator (Offline)</span>
+                            </label>
+                        </div>
                     </div>
 
-                    <div class="text-[11px] text-slate-400 bg-slate-950/60 p-2 rounded border border-borderCol/60">
-                        <span>Ingestion: </span>
-                        <span class="text-emerald-400 font-mono" id="deviceLabel">Direct Laptop Webcam (Device 0)</span>
+                    <div class="pt-2 border-t border-borderCol/60 space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <label class="text-slate-300 flex items-center space-x-2">
+                                <input type="checkbox" id="streamActiveToggle" checked class="rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-0">
+                                <span>▶️ Activate Video Feed</span>
+                            </label>
+                            <span id="camStatusBadge" class="badge-amber">Camera Idle</span>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs text-slate-300">
+                            <label for="mirrorToggle" class="cursor-pointer flex items-center space-x-2">
+                                <input type="checkbox" id="mirrorToggle" checked class="rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-0">
+                                <span>🪞 Mirror Webcam Horizontally</span>
+                            </label>
+                        </div>
+
+                        <div class="pt-1">
+                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Display Layout</label>
+                            <select id="layoutSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded p-1.5 focus:outline-none">
+                                <option value="side">Side-by-Side (Original vs Processed)</option>
+                                <option value="processed">Processed Only</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -105,19 +141,18 @@
                     <span>🔬</span>
                     <span>Laboratory Modules</span>
                 </h2>
-                <p class="text-[11px] text-slate-400 mb-2.5">Select a Digital Image Processing or Computer Vision module to run live:</p>
-
-                <div class="space-y-1" id="moduleList">
-                    <button class="module-btn" data-mod="1">1. Color Space Transformations</button>
-                    <button class="module-btn" data-mod="2">2. Spatial Filtering & Noise Reduction</button>
-                    <button class="module-btn" data-mod="3">3. Edge Detection & Gradients</button>
-                    <button class="module-btn" data-mod="4">4. Image Thresholding & Segmentation</button>
-                    <button class="module-btn" data-mod="5">5. Morphological Operations</button>
-                    <button class="module-btn" data-mod="6">6. Histogram Equalization & Contrast</button>
-                    <button class="module-btn" data-mod="7">7. Real-Time Motion Detection (CV)</button>
-                    <button class="module-btn active" data-mod="8">8. Face & Feature Localization (CV)</button>
-                    <button class="module-btn" data-mod="9">9. Contour & Geometric Shape (CV)</button>
-                </div>
+                <label for="moduleSelect" class="block text-[11px] text-slate-400 mb-1.5">Select DIP / CV Technique:</label>
+                <select id="moduleSelect" class="w-full bg-slate-900 border border-slate-700 text-sky-400 font-medium text-xs rounded p-2 focus:outline-none">
+                    <option value="1">1. Color Space Transformations</option>
+                    <option value="2">2. Spatial Filtering & Noise Reduction</option>
+                    <option value="3">3. Edge Detection & Gradients</option>
+                    <option value="4">4. Image Thresholding & Segmentation</option>
+                    <option value="5">5. Morphological Operations</option>
+                    <option value="6">6. Histogram Equalization & Contrast</option>
+                    <option value="7">7. Real-Time Motion Detection (CV)</option>
+                    <option value="8" selected>8. Face & Feature Localization (CV)</option>
+                    <option value="9">9. Contour & Geometric Shape Analysis (CV)</option>
+                </select>
             </div>
 
             <!-- Dynamic Parameter Tuning Section -->
@@ -127,97 +162,200 @@
                     <span>Parameter Tuning</span>
                 </h2>
                 <div id="parameterControls" class="space-y-3.5 text-xs">
-                    <!-- Populated dynamically via JS -->
+                    <!-- Populated dynamically via JS based on selected module -->
                 </div>
             </div>
 
         </aside>
 
-        <!-- CENTER / RIGHT: SINGLE-SCREEN ZERO-SCROLL SIDE-BY-SIDE VIEWPORT -->
-        <main class="flex-1 p-4 lg:p-5 overflow-y-auto flex flex-col space-y-4">
-            
-            <!-- Side-by-Side Dual Viewport Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- ==================================================================== -->
+        <!-- MAIN WORKSPACE: MODE VIEWS + TELEMETRY + MULTI-FILTER GALLERY        -->
+        <!-- ==================================================================== -->
+        <main class="flex-1 p-4 lg:p-6 overflow-y-auto space-y-6">
 
-                <!-- Left Column: Raw Webcam Feed -->
-                <div class="bg-cardBg border border-borderCol rounded-xl p-3.5 shadow-lg flex flex-col">
-                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
-                        <span class="flex items-center space-x-1.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                            <span id="rawHeaderBadge">Live Ingestion (FaceTime HD Device 0)</span>
-                        </span>
-                        <span class="badge font-mono" id="rawResolution">640x480</span>
-                    </div>
-
-                    <div class="relative aspect-[4/3] w-full bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border border-borderCol">
-                        <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
-                        <div id="leftOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-950/85 transition-opacity">
-                            <span class="text-3xl mb-2">📹</span>
-                            <span class="font-semibold text-slate-200">Camera Feed Inactive</span>
-                            <span class="text-[11px] text-slate-500 mt-1">Click "Activate Camera Feed" in the sidebar</span>
-                        </div>
-                    </div>
-
-                    <div class="mt-2.5 bg-slate-900/90 border border-borderCol rounded px-3 py-1.5 text-[11px] text-slate-400 flex justify-between font-mono">
-                        <span>Source: navigator.mediaDevices.getUserMedia</span>
-                        <span class="text-emerald-400">Direct Hardware Pipeline</span>
-                    </div>
+            <!-- MODE A: BROWSER CAMERA SNAPSHOT & MULTI-FILTER SECTION -->
+            <section id="snapshotModeSection" class="hidden bg-cardBg border border-borderCol rounded-xl p-5 shadow-lg space-y-4">
+                <div class="border-b border-borderCol pb-3">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>📸</span>
+                        <span>Live Browser Camera Snapshot & Multi-Filter Inspection</span>
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">Look into your laptop camera and press <strong>"Take Photo"</strong> below to immediately test and compare DIP & Computer Vision algorithms on your own face!</p>
                 </div>
 
-                <!-- Right Column: Real-Time Processed CV Frame -->
-                <div class="bg-cardBg border border-borderCol rounded-xl p-3.5 shadow-lg flex flex-col">
-                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
-                        <span class="flex items-center space-x-1.5 text-sky-400">
-                            <span>⚡</span>
-                            <span id="processedHeader">Module 8: Face & Feature Localization</span>
-                        </span>
-                        <span class="badge text-emerald-400 font-mono" id="fpsDisplay">0.0 FPS</span>
+                <div class="flex flex-wrap items-center gap-3">
+                    <button id="takeSnapshotBtn" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2 rounded text-xs transition flex items-center space-x-2">
+                        <span>📷</span>
+                        <span>Take Photo / Capture Snapshot</span>
+                    </button>
+                    <span id="snapshotStatus" class="text-xs text-slate-400">Camera preview active. Click to capture facial frame.</span>
+                </div>
+
+                <!-- Snapshot Dual Display -->
+                <div id="snapshotDualView" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    <div>
+                        <div class="text-xs font-semibold text-slate-300 mb-1.5">📹 Original Snapshot (Your Face)</div>
+                        <img id="snapshotRawImg" class="w-full aspect-[4/3] object-cover rounded-lg border border-borderCol bg-slate-950">
+                        <div class="mt-2 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-400 flex justify-between font-mono">
+                            <span>🟢 <b>Raw Ingestion Photo</b></span>
+                            <span>📐 <b>640x480</b></span>
+                        </div>
                     </div>
 
-                    <div class="relative aspect-[4/3] w-full bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border border-borderCol">
-                        <canvas id="cvCanvas" width="640" height="480" class="w-full h-full object-cover"></canvas>
-                        <div id="rightOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-950/85 transition-opacity">
-                            <span class="text-3xl mb-2">🔬</span>
-                            <span class="font-semibold text-slate-200">Processed Output Awaiting Camera</span>
-                            <span class="text-[11px] text-slate-500 mt-1">Real-time DIP/CV algorithms will render here</span>
-                        </div>
-                    </div>
-
-                    <!-- Direct Live Telemetry Card -->
-                    <div class="mt-2.5 grid grid-cols-4 gap-2 text-center text-xs font-mono">
-                        <div class="bg-slate-900 border border-borderCol rounded py-1.5 px-2">
-                            <div class="text-[10px] text-slate-400 uppercase">Status</div>
-                            <div id="telemetryStatus" class="font-bold text-amber-400 text-[11px]">SEARCHING</div>
-                        </div>
-                        <div class="bg-slate-900 border border-borderCol rounded py-1.5 px-2">
-                            <div class="text-[10px] text-slate-400 uppercase" id="telemetryMetric1Label">Faces</div>
-                            <div id="telemetryMetric1" class="font-bold text-sky-400 text-xs">0</div>
-                        </div>
-                        <div class="bg-slate-900 border border-borderCol rounded py-1.5 px-2">
-                            <div class="text-[10px] text-slate-400 uppercase" id="telemetryMetric2Label">Eyes Tracked</div>
-                            <div id="telemetryMetric2" class="font-bold text-sky-400 text-xs">0</div>
-                        </div>
-                        <div class="bg-slate-900 border border-borderCol rounded py-1.5 px-2">
-                            <div class="text-[10px] text-slate-400 uppercase">Throughput</div>
-                            <div id="telemetryFps" class="font-bold text-emerald-400 text-xs">0.0 FPS</div>
+                    <div>
+                        <div class="text-xs font-semibold text-sky-400 mb-1.5" id="snapshotProcessedTitle">⚡ Processed Output</div>
+                        <canvas id="snapshotProcCanvas" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded-lg border border-borderCol bg-slate-950"></canvas>
+                        <div class="mt-2 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-300 flex justify-between font-mono" id="snapshotTelemetry">
+                            <!-- Telemetry -->
                         </div>
                     </div>
                 </div>
 
-            </div>
+                <!-- Multi-Filter Gallery -->
+                <div id="multiFilterGallery" class="hidden pt-4 border-t border-borderCol">
+                    <h3 class="text-sm font-bold text-sky-400 mb-2">🔬 Multi-Filter Gallery: See 6 Core DIP & CV Algorithms Applied to Your Face Simultaneously</h3>
+                    <p class="text-xs text-slate-400 mb-4">Here is how 6 distinct mathematical computer vision transformations alter your exact facial portrait:</p>
 
-            <!-- Academic Mathematical Foundations & Algorithm Theory -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- 1. Face & Eye Localization -->
+                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                            <div class="text-xs font-bold text-slate-200 mb-1">1. Face & Eye Localization</div>
+                            <canvas id="galCanvas1" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
+                            <div class="text-[11px] text-slate-400 mt-1">Viola-Jones Bounding Boxes & Crosshairs</div>
+                        </div>
+
+                        <!-- 2. Bilateral Skin Smoothing -->
+                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                            <div class="text-xs font-bold text-slate-200 mb-1">2. Bilateral Filter</div>
+                            <canvas id="galCanvas2" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
+                            <div class="text-[11px] text-slate-400 mt-1">Edge-Preserving Smoothing (Skin Smooth)</div>
+                        </div>
+
+                        <!-- 3. CLAHE Equalization -->
+                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                            <div class="text-xs font-bold text-slate-200 mb-1">3. CLAHE Equalization</div>
+                            <canvas id="galCanvas3" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
+                            <div class="text-[11px] text-slate-400 mt-1">Adaptive Local Contrast Enhancement</div>
+                        </div>
+
+                        <!-- 4. Canny Edge Detection -->
+                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                            <div class="text-xs font-bold text-slate-200 mb-1">4. Canny Edge Detection</div>
+                            <canvas id="galCanvas4" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
+                            <div class="text-[11px] text-slate-400 mt-1">Multi-Stage Hysteresis Wireframe</div>
+                        </div>
+
+                        <!-- 5. Otsu's Bimodal Thresholding -->
+                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                            <div class="text-xs font-bold text-slate-200 mb-1">5. Otsu's Bimodal Thresholding</div>
+                            <canvas id="galCanvas5" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
+                            <div class="text-[11px] text-slate-400 mt-1">Optimal Class Variance Binary Mask</div>
+                        </div>
+
+                        <!-- 6. Grayscale Conversion -->
+                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                            <div class="text-xs font-bold text-slate-200 mb-1">6. Grayscale Conversion</div>
+                            <canvas id="galCanvas6" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
+                            <div class="text-[11px] text-slate-400 mt-1">Rec. 601 Luma (0.299R + 0.587G + 0.114B)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- MODE B: REAL-TIME CONTINUOUS STREAM & SYNTHETIC STREAM -->
+            <section id="streamModeSection" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="streamDualGrid">
+
+                    <!-- Left Column: Raw Webcam Feed -->
+                    <div id="colLeftWrapper" class="bg-cardBg border border-borderCol rounded-xl p-3.5 shadow-lg flex flex-col">
+                        <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
+                            <span class="flex items-center space-x-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span id="rawStreamTitle">Live Camera Feed (Your Raw Image)</span>
+                            </span>
+                            <span class="badge font-mono" id="rawResolutionBadge">640x480</span>
+                        </div>
+
+                        <div class="relative aspect-[4/3] w-full bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border border-borderCol">
+                            <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+                            <canvas id="syntheticCanvas" width="640" height="480" class="hidden w-full h-full object-cover"></canvas>
+                            <div id="leftOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-950/85 transition-opacity">
+                                <span class="text-3xl mb-2">📹</span>
+                                <span class="font-semibold text-slate-200" id="leftOverlayText">Activating Camera Stream...</span>
+                                <span class="text-[11px] text-slate-500 mt-1">Direct WebRTC hardware stream</span>
+                            </div>
+                        </div>
+
+                        <!-- Left Telemetry Matching Local App -->
+                        <div class="mt-2.5 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-400 flex justify-between font-mono">
+                            <span id="leftDeviceTag">🟢 <b>Live Ingestion</b> (FaceTime HD Device 0)</span>
+                            <span>📐 <b>640x480</b></span>
+                            <span id="leftMirrorTag">🪞 <b>Mirrored View</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Processed Stream -->
+                    <div id="colRightWrapper" class="bg-cardBg border border-borderCol rounded-xl p-3.5 shadow-lg flex flex-col">
+                        <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
+                            <span class="flex items-center space-x-1.5 text-sky-400">
+                                <span>⚡</span>
+                                <span id="processedStreamTitle">Live Processed Vision: Face & Feature Localization</span>
+                            </span>
+                            <span class="badge text-emerald-400 font-mono" id="streamFpsBadge">0.0 FPS</span>
+                        </div>
+
+                        <div class="relative aspect-[4/3] w-full bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border border-borderCol">
+                            <canvas id="processedCanvas" width="640" height="480" class="w-full h-full object-cover"></canvas>
+                            <div id="rightOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-950/85 transition-opacity">
+                                <span class="text-3xl mb-2">🔬</span>
+                                <span class="font-semibold text-slate-200">Processed Output Active</span>
+                            </div>
+                        </div>
+
+                        <!-- Right Telemetry Card Matching Local App -->
+                        <div id="rightTelemetryCard" class="mt-2.5 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-200 flex justify-between items-center font-mono">
+                            <span id="telemetryStatus" class="font-bold text-amber-400">🟡 SEARCHING FACE</span>
+                            <span id="telemetryFaceSpan">👤 Faces: <b class="text-sky-400" id="telemetryFaceCount">0</b></span>
+                            <span id="telemetryEyeSpan">👁️ Eyes: <b class="text-sky-400" id="telemetryEyeCount">0</b></span>
+                            <span id="telemetryCenterSpan">📍 Center: <b id="telemetryCenter">N/A</b></span>
+                            <span class="text-purple-400 font-mono" id="telemetryFps">⚡ 0.0 FPS</span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ACADEMIC MATHEMATICAL FOUNDATIONS SECTION -->
             <section class="bg-cardBg border border-borderCol rounded-xl p-4 shadow">
-                <details id="theoryDetails" open class="cursor-pointer">
+                <details id="theoryDetails" class="cursor-pointer">
                     <summary class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center justify-between">
                         <span class="flex items-center space-x-1.5">
                             <span>📘</span>
-                            <span id="theoryTitle">Academic DIP & CV Foundations: Module 8 (Viola-Jones & Face Landmarks)</span>
+                            <span id="theoryTitle">DIP & CV Mathematical Foundations & Algorithm Theory (Click to Expand for Professor Q&A)</span>
                         </span>
-                        <span class="text-slate-500 text-[11px] font-normal lowercase">(click to collapse / expand)</span>
+                        <span class="text-slate-500 text-[11px] font-normal lowercase">(click to expand)</span>
                     </summary>
                     <div id="theoryBody" class="mt-3 text-xs text-slate-300 leading-relaxed space-y-2 border-t border-borderCol/60 pt-3">
-                        <!-- Populated dynamically based on active module -->
+                        <!-- Populated dynamically -->
+                    </div>
+                </details>
+            </section>
+
+            <!-- HOW TO DEMONSTRATE SECTION -->
+            <section class="bg-cardBg border border-borderCol rounded-xl p-4 shadow">
+                <details class="cursor-pointer">
+                    <summary class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center justify-between">
+                        <span class="flex items-center space-x-1.5">
+                            <span>💡</span>
+                            <span>How to Demonstrate Facial & Video Processing to Your Professor</span>
+                        </span>
+                        <span class="text-slate-500 text-[11px] font-normal lowercase">(click to expand)</span>
+                    </summary>
+                    <div class="mt-3 text-xs text-slate-300 leading-relaxed space-y-2 border-t border-borderCol/60 pt-3">
+                        <p>• <strong>Face Tracking (Module 8)</strong>: As you move your head, notice the green bounding box and yellow crosshair following your facial centroid with exact coordinates.</p>
+                        <p>• <strong>Eye Tracking</strong>: Notice the blue boxes over your eyes. Blink or cover an eye to show the eye counter change from 2 to 1.</p>
+                        <p>• <strong>Motion Detection (Module 7)</strong>: Wave your hand in front of the camera to see the red motion bounding boxes and motion percentage meter react to temporal frame differencing.</p>
+                        <p>• <strong>Edge Detection (Module 3)</strong>: Tune the lower and upper hysteresis sliders in the left sidebar to show how Canny suppresses noise while highlighting facial contours.</p>
                     </div>
                 </details>
             </section>
@@ -225,808 +363,1137 @@
         </main>
     </div>
 
-    <!-- Hidden offscreen processing canvas -->
+    <!-- Hidden Offscreen Canvas for Frame Processing -->
     <canvas id="offscreenCanvas" width="640" height="480" class="hidden"></canvas>
 
-    <!-- JAVASCRIPT: COMPUTER VISION PIPELINE & REAL-TIME MODULE ENGINES -->
+    <!-- ==================================================================== -->
+    <!-- JAVASCRIPT: PROCESSING PIPELINE & MATCHED STREAMLIT LOGIC            -->
+    <!-- ==================================================================== -->
     <script>
+        // State
+        let currentMode = 'stream'; // 'stream', 'snapshot', 'synthetic'
         let activeModule = 8;
         let isStreaming = false;
         let mediaStream = null;
         let blazefaceModel = null;
         let modelLoading = false;
         let prevFrameData = null;
+        let bgAvg = null;
         let frameCount = 0;
         let lastTime = performance.now();
-        let currentFps = 0;
+        let fps = 0;
+        let syntheticT = 0;
+        let lastSnapshotData = null;
 
+        // Elements
         const webcamVideo = document.getElementById('webcamVideo');
-        const cvCanvas = document.getElementById('cvCanvas');
-        const cvCtx = cvCanvas.getContext('2d');
+        const processedCanvas = document.getElementById('processedCanvas');
+        const procCtx = processedCanvas.getContext('2d');
+        const syntheticCanvas = document.getElementById('syntheticCanvas');
+        const synthCtx = syntheticCanvas.getContext('2d');
         const offscreenCanvas = document.getElementById('offscreenCanvas');
         const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
-        
-        const toggleCamBtn = document.getElementById('toggleCamBtn');
-        const camBtnText = document.getElementById('camBtnText');
+
+        const streamActiveToggle = document.getElementById('streamActiveToggle');
         const mirrorToggle = document.getElementById('mirrorToggle');
-        const camStatusBadge = document.getElementById('camStatusBadge');
-        const leftOverlay = document.getElementById('leftOverlay');
-        const rightOverlay = document.getElementById('rightOverlay');
-        const processedHeader = document.getElementById('processedHeader');
-        const fpsDisplay = document.getElementById('fpsDisplay');
+        const layoutSelect = document.getElementById('layoutSelect');
+        const moduleSelect = document.getElementById('moduleSelect');
         const parameterControls = document.getElementById('parameterControls');
         const theoryTitle = document.getElementById('theoryTitle');
         const theoryBody = document.getElementById('theoryBody');
-        
+
+        const colLeftWrapper = document.getElementById('colLeftWrapper');
+        const colRightWrapper = document.getElementById('colRightWrapper');
+        const leftOverlay = document.getElementById('leftOverlay');
+        const rightOverlay = document.getElementById('rightOverlay');
+        const leftOverlayText = document.getElementById('leftOverlayText');
+        const leftDeviceTag = document.getElementById('leftDeviceTag');
+        const leftMirrorTag = document.getElementById('leftMirrorTag');
+        const rawStreamTitle = document.getElementById('rawStreamTitle');
+        const processedStreamTitle = document.getElementById('processedStreamTitle');
+        const streamFpsBadge = document.getElementById('streamFpsBadge');
+        const camStatusBadge = document.getElementById('camStatusBadge');
+
         const telemetryStatus = document.getElementById('telemetryStatus');
-        const telemetryMetric1Label = document.getElementById('telemetryMetric1Label');
-        const telemetryMetric1 = document.getElementById('telemetryMetric1');
-        const telemetryMetric2Label = document.getElementById('telemetryMetric2Label');
-        const telemetryMetric2 = document.getElementById('telemetryMetric2');
+        const telemetryFaceSpan = document.getElementById('telemetryFaceSpan');
+        const telemetryFaceCount = document.getElementById('telemetryFaceCount');
+        const telemetryEyeSpan = document.getElementById('telemetryEyeSpan');
+        const telemetryEyeCount = document.getElementById('telemetryEyeCount');
+        const telemetryCenterSpan = document.getElementById('telemetryCenterSpan');
+        const telemetryCenter = document.getElementById('telemetryCenter');
         const telemetryFps = document.getElementById('telemetryFps');
 
-        const params = {
-            1: { colorSpace: 'Grayscale', channel: 'All' },
-            2: { filterType: 'Gaussian Blur', ksize: 11, sigma: 2.0 },
-            3: { operator: 'Canny Edge Detector', low: 50, high: 150, invert: false },
-            4: { method: 'Global Binary Threshold', thresh: 127, invert: false },
-            5: { op: 'Morphological Gradient (Edges)', ksize: 5 },
-            6: { method: 'CLAHE (Contrast Limited)', clipLimit: 3.0 },
-            7: { sensitivity: 25, minArea: 1000, smoothBg: true },
-            8: { scaleFactor: 1.15, minNeighbors: 5, trackEyes: true },
-            9: { minArea: 800, drawBounding: true, drawCentroid: true }
-        };
+        // Snapshot Elements
+        const snapshotModeSection = document.getElementById('snapshotModeSection');
+        const streamModeSection = document.getElementById('streamModeSection');
+        const takeSnapshotBtn = document.getElementById('takeSnapshotBtn');
+        const snapshotStatus = document.getElementById('snapshotStatus');
+        const snapshotDualView = document.getElementById('snapshotDualView');
+        const snapshotRawImg = document.getElementById('snapshotRawImg');
+        const snapshotProcCanvas = document.getElementById('snapshotProcCanvas');
+        const snapshotProcCtx = snapshotProcCanvas.getContext('2d');
+        const snapshotTelemetry = document.getElementById('snapshotTelemetry');
+        const multiFilterGallery = document.getElementById('multiFilterGallery');
 
+        // Module Names Map
         const moduleNames = {
-            1: "1. Color Space Transformations",
-            2: "2. Spatial Filtering & Noise Reduction",
-            3: "3. Edge Detection & Gradients",
-            4: "4. Image Thresholding & Segmentation",
-            5: "5. Morphological Operations",
-            6: "6. Histogram Equalization & Contrast",
-            7: "7. Real-Time Motion Detection (CV)",
-            8: "8. Face & Feature Localization (CV)",
-            9: "9. Contour & Geometric Shape (CV)"
+            1: "Color Space Transformations",
+            2: "Spatial Filtering & Noise Reduction",
+            3: "Edge Detection & Gradients",
+            4: "Image Thresholding & Segmentation",
+            5: "Morphological Operations",
+            6: "Histogram Equalization & Contrast",
+            7: "Real-Time Motion Detection (CV)",
+            8: "Face & Feature Localization (CV)",
+            9: "Contour & Geometric Shape Analysis (CV)"
         };
 
+        // Complete Parameters Mirroring app.py
+        const params = {
+            1: { color_space: 'Grayscale', channel_view: 'All / Merged' },
+            2: { filter: 'gaussian', ksize: 11, sigma: 2.0, d: 9, sigma_color: 75, sigma_space: 75, strength: 1.5 },
+            3: { operator: 'canny', low: 50, high: 150, invert: false, mode: 'Combined Gradient Magnitude', ksize: 3 },
+            4: { type: 'binary', thresh: 127, invert: false, blur: true, block_size: 15, c: 2 },
+            5: { op: 'Morphological Gradient (Edges)', shape: 'Rectangle', ksize: 5, iterations: 1 },
+            6: { method: 'clahe', clip: 3.0, grid: 8 },
+            7: { thresh: 25, min_area: 1000, smooth: true },
+            8: { scale: 1.15, neighbors: 5, eyes: true },
+            9: { min_area: 800, bounding: true, hull: false }
+        };
+
+        // Render Parameters Exactly Like Streamlit Sidebar
         function renderParameters() {
             parameterControls.innerHTML = '';
+            const m = activeModule;
 
-            if (activeModule === 1) {
+            if (m === 1) {
                 parameterControls.innerHTML = `
                     <div>
                         <label class="block text-slate-300 mb-1">Target Color Space</label>
-                        <select id="p_colorSpace" class="w-full bg-slate-900 border border-slate-700 text-sky-400 rounded p-1.5 focus:outline-none">
-                            <option value="Grayscale" ${params[1].colorSpace === 'Grayscale' ? 'selected' : ''}>Grayscale (Rec. 601 Luma)</option>
-                            <option value="HSV" ${params[1].colorSpace === 'HSV' ? 'selected' : ''}>HSV (Hue, Saturation, Value)</option>
-                            <option value="CIELAB" ${params[1].colorSpace === 'CIELAB' ? 'selected' : ''}>CIELAB (L*, a*, b* Opponent)</option>
-                            <option value="Sepia" ${params[1].colorSpace === 'Sepia' ? 'selected' : ''}>Sepia Tone Matrix</option>
-                            <option value="Invert" ${params[1].colorSpace === 'Invert' ? 'selected' : ''}>Spectral Inversion (Negative)</option>
+                        <select id="p_cs" class="w-full text-xs rounded p-1.5">
+                            <option value="Grayscale" ${params[1].color_space === 'Grayscale' ? 'selected':''}>Grayscale</option>
+                            <option value="HSV" ${params[1].color_space === 'HSV' ? 'selected':''}>HSV</option>
+                            <option value="CIELAB" ${params[1].color_space === 'CIELAB' ? 'selected':''}>CIELAB</option>
+                            <option value="YCrCb" ${params[1].color_space === 'YCrCb' ? 'selected':''}>YCrCb</option>
+                        </select>
+                    </div>
+                    <div id="channelGroup" class="${params[1].color_space === 'Grayscale' ? 'hidden':''}">
+                        <label class="block text-slate-300 mb-1">Channel Split View</label>
+                        <select id="p_cv" class="w-full text-xs rounded p-1.5">
+                            <option value="All / Merged">All / Merged</option>
+                            <option value="Channel 1">Channel 1</option>
+                            <option value="Channel 2">Channel 2</option>
+                            <option value="Channel 3">Channel 3</option>
                         </select>
                     </div>
                 `;
-                document.getElementById('p_colorSpace').onchange = (e) => { params[1].colorSpace = e.target.value; };
-            } 
-            else if (activeModule === 2) {
+                document.getElementById('p_cs').onchange = (e) => {
+                    params[1].color_space = e.target.value;
+                    document.getElementById('channelGroup').classList.toggle('hidden', e.target.value === 'Grayscale');
+                    triggerReprocess();
+                };
+                document.getElementById('p_cv').onchange = (e) => {
+                    params[1].channel_view = e.target.value;
+                    triggerReprocess();
+                };
+            }
+            else if (m === 2) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Filter Operator</label>
-                        <select id="p_filterType" class="w-full bg-slate-900 border border-slate-700 text-sky-400 rounded p-1.5 focus:outline-none">
-                            <option value="Gaussian Blur" ${params[2].filterType === 'Gaussian Blur' ? 'selected' : ''}>Gaussian Blur (Low-pass)</option>
-                            <option value="Sharpen" ${params[2].filterType === 'Sharpen' ? 'selected' : ''}>Laplacian Sharpening Kernel</option>
+                        <label class="block text-slate-300 mb-1">Filter Type</label>
+                        <select id="p_ft" class="w-full text-xs rounded p-1.5">
+                            <option value="gaussian">Gaussian Blur</option>
+                            <option value="median">Median Blur</option>
+                            <option value="bilateral">Bilateral Filter (Edge-Preserving)</option>
+                            <option value="sharpen">Sharpening Kernel</option>
                         </select>
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Kernel Size (Odd NxN)</span>
-                            <span id="ksizeVal" class="text-sky-400 font-mono">${params[2].ksize}</span>
-                        </div>
-                        <input type="range" id="p_ksize" min="3" max="21" step="2" value="${params[2].ksize}" class="w-full">
-                    </div>
+                    <div id="filterParams" class="space-y-3 pt-1"></div>
                 `;
-                document.getElementById('p_filterType').onchange = (e) => { params[2].filterType = e.target.value; };
-                document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); document.getElementById('ksizeVal').innerText = e.target.value; };
+                const ftSelect = document.getElementById('p_ft');
+                ftSelect.value = params[2].filter;
+                function updateFilterControls() {
+                    const fp = document.getElementById('filterParams');
+                    const cur = ftSelect.value;
+                    params[2].filter = cur;
+                    if (cur === 'gaussian') {
+                        fp.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Kernel Size (Odd NxN)</span><span class="text-sky-400 font-mono">${params[2].ksize}</span></div>
+                                <input type="range" id="p_ksize" min="3" max="35" step="2" value="${params[2].ksize}" class="w-full">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Sigma</span><span class="text-sky-400 font-mono">${params[2].sigma}</span></div>
+                                <input type="range" id="p_sigma" min="0.1" max="10.0" step="0.1" value="${params[2].sigma}" class="w-full">
+                            </div>
+                        `;
+                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_sigma').oninput = (e) => { params[2].sigma = parseFloat(e.target.value); updateFilterControls(); };
+                    } else if (cur === 'median') {
+                        fp.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Kernel Size (Odd)</span><span class="text-sky-400 font-mono">${params[2].ksize}</span></div>
+                                <input type="range" id="p_ksize" min="3" max="31" step="2" value="${params[2].ksize}" class="w-full">
+                            </div>
+                        `;
+                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); updateFilterControls(); };
+                    } else if (cur === 'bilateral') {
+                        fp.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Diameter</span><span class="text-sky-400 font-mono">${params[2].d}</span></div>
+                                <input type="range" id="p_d" min="3" max="25" step="2" value="${params[2].d}" class="w-full">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Sigma Color</span><span class="text-sky-400 font-mono">${params[2].sigma_color}</span></div>
+                                <input type="range" id="p_sc" min="10" max="200" step="5" value="${params[2].sigma_color}" class="w-full">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Sigma Space</span><span class="text-sky-400 font-mono">${params[2].sigma_space}</span></div>
+                                <input type="range" id="p_ss" min="10" max="200" step="5" value="${params[2].sigma_space}" class="w-full">
+                            </div>
+                        `;
+                        document.getElementById('p_d').oninput = (e) => { params[2].d = parseInt(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_sc').oninput = (e) => { params[2].sigma_color = parseInt(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_ss').oninput = (e) => { params[2].sigma_space = parseInt(e.target.value); updateFilterControls(); };
+                    } else {
+                        fp.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Sharpen Strength</span><span class="text-sky-400 font-mono">${params[2].strength}</span></div>
+                                <input type="range" id="p_str" min="1.0" max="4.0" step="0.1" value="${params[2].strength}" class="w-full">
+                            </div>
+                        `;
+                        document.getElementById('p_str').oninput = (e) => { params[2].strength = parseFloat(e.target.value); updateFilterControls(); };
+                    }
+                    triggerReprocess();
+                }
+                ftSelect.onchange = updateFilterControls;
+                updateFilterControls();
             }
-            else if (activeModule === 3) {
+            else if (m === 3) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Edge Operator</label>
-                        <select id="p_edgeOp" class="w-full bg-slate-900 border border-slate-700 text-sky-400 rounded p-1.5 focus:outline-none">
-                            <option value="Canny Edge Detector" selected>Canny Multi-Stage Edge Detector</option>
-                            <option value="Sobel Gradient Operator">Sobel Spatial Gradient Operator</option>
-                            <option value="Laplacian 2nd Derivative">Laplacian 2nd Derivative (∇²)</option>
+                        <label class="block text-slate-300 mb-1">Operator</label>
+                        <select id="p_op3" class="w-full text-xs rounded p-1.5">
+                            <option value="canny">Canny Edge Detector</option>
+                            <option value="sobel">Sobel Gradient Operator</option>
+                            <option value="laplacian">Laplacian 2nd Derivative</option>
                         </select>
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Lower Threshold</span>
-                            <span id="lowVal" class="text-sky-400 font-mono">${params[3].low}</span>
-                        </div>
-                        <input type="range" id="p_low" min="1" max="255" value="${params[3].low}" class="w-full">
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Upper Threshold</span>
-                            <span id="highVal" class="text-sky-400 font-mono">${params[3].high}</span>
-                        </div>
-                        <input type="range" id="p_high" min="1" max="255" value="${params[3].high}" class="w-full">
-                    </div>
-                    <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_invertEdge" ${params[3].invert ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_invertEdge" class="text-slate-300 cursor-pointer">Invert Edges (Black on White)</label>
-                    </div>
+                    <div id="edgeControls" class="space-y-3 pt-1"></div>
                 `;
-                document.getElementById('p_edgeOp').onchange = (e) => { params[3].operator = e.target.value; };
-                document.getElementById('p_low').oninput = (e) => { params[3].low = parseInt(e.target.value); document.getElementById('lowVal').innerText = e.target.value; };
-                document.getElementById('p_high').oninput = (e) => { params[3].high = parseInt(e.target.value); document.getElementById('highVal').innerText = e.target.value; };
-                document.getElementById('p_invertEdge').onchange = (e) => { params[3].invert = e.target.checked; };
+                const opSelect = document.getElementById('p_op3');
+                opSelect.value = params[3].operator;
+                function updateEdgeControls() {
+                    const ec = document.getElementById('edgeControls');
+                    const cur = opSelect.value;
+                    params[3].operator = cur;
+                    if (cur === 'canny') {
+                        ec.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Lower Hysteresis Threshold</span><span class="text-sky-400 font-mono">${params[3].low}</span></div>
+                                <input type="range" id="p_low" min="1" max="255" value="${params[3].low}" class="w-full">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Upper Hysteresis Threshold</span><span class="text-sky-400 font-mono">${params[3].high}</span></div>
+                                <input type="range" id="p_high" min="1" max="255" value="${params[3].high}" class="w-full">
+                            </div>
+                            <div class="flex items-center space-x-2 pt-1">
+                                <input type="checkbox" id="p_inv" ${params[3].invert ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                                <label for="p_inv" class="text-slate-300 cursor-pointer">Invert Edges (Black on White)</label>
+                            </div>
+                        `;
+                        document.getElementById('p_low').oninput = (e) => { params[3].low = parseInt(e.target.value); updateEdgeControls(); };
+                        document.getElementById('p_high').oninput = (e) => { params[3].high = parseInt(e.target.value); updateEdgeControls(); };
+                        document.getElementById('p_inv').onchange = (e) => { params[3].invert = e.target.checked; triggerReprocess(); };
+                    } else if (cur === 'sobel') {
+                        ec.innerHTML = `
+                            <div>
+                                <label class="block text-slate-300 mb-1">Sobel Direction</label>
+                                <select id="p_sobelMode" class="w-full text-xs rounded p-1.5">
+                                    <option value="Combined Gradient Magnitude">Combined Gradient Magnitude</option>
+                                    <option value="Sobel X (Vertical Edges)">Sobel X (Vertical Edges)</option>
+                                    <option value="Sobel Y (Horizontal Edges)">Sobel Y (Horizontal Edges)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-slate-300 mb-1">Kernel Size</label>
+                                <select id="p_ksize3" class="w-full text-xs rounded p-1.5">
+                                    <option value="3">3</option>
+                                    <option value="5">5</option>
+                                    <option value="7">7</option>
+                                </select>
+                            </div>
+                        `;
+                        document.getElementById('p_sobelMode').value = params[3].mode;
+                        document.getElementById('p_sobelMode').onchange = (e) => { params[3].mode = e.target.value; triggerReprocess(); };
+                        document.getElementById('p_ksize3').value = params[3].ksize;
+                        document.getElementById('p_ksize3').onchange = (e) => { params[3].ksize = parseInt(e.target.value); triggerReprocess(); };
+                    } else {
+                        ec.innerHTML = `
+                            <div>
+                                <label class="block text-slate-300 mb-1">Laplacian Kernel Size</label>
+                                <select id="p_ksizeLap" class="w-full text-xs rounded p-1.5">
+                                    <option value="1">1</option>
+                                    <option value="3">3</option>
+                                    <option value="5">5</option>
+                                    <option value="7">7</option>
+                                </select>
+                            </div>
+                        `;
+                        document.getElementById('p_ksizeLap').value = params[3].ksize;
+                        document.getElementById('p_ksizeLap').onchange = (e) => { params[3].ksize = parseInt(e.target.value); triggerReprocess(); };
+                    }
+                    triggerReprocess();
+                }
+                opSelect.onchange = updateEdgeControls;
+                updateEdgeControls();
             }
-            else if (activeModule === 4) {
+            else if (m === 4) {
                 parameterControls.innerHTML = `
                     <div>
                         <label class="block text-slate-300 mb-1">Segmentation Method</label>
-                        <select id="p_threshMethod" class="w-full bg-slate-900 border border-slate-700 text-sky-400 rounded p-1.5 focus:outline-none">
-                            <option value="Global Binary Threshold">Global Binary Threshold</option>
-                            <option value="Otsu's Bimodal">Otsu's Bimodal (Auto-Computed)</option>
+                        <select id="p_tm" class="w-full text-xs rounded p-1.5">
+                            <option value="binary">Global Binary Threshold</option>
+                            <option value="otsu">Otsu's Bimodal Thresholding</option>
+                            <option value="adaptive">Adaptive Gaussian Thresholding</option>
                         </select>
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Threshold Value (T)</span>
-                            <span id="threshVal" class="text-sky-400 font-mono">${params[4].thresh}</span>
-                        </div>
-                        <input type="range" id="p_thresh" min="0" max="255" value="${params[4].thresh}" class="w-full">
-                    </div>
-                    <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_invertThresh" ${params[4].invert ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_invertThresh" class="text-slate-300 cursor-pointer">Invert Mask (THRESH_INV)</label>
-                    </div>
+                    <div id="threshControls" class="space-y-3 pt-1"></div>
                 `;
-                document.getElementById('p_threshMethod').onchange = (e) => { params[4].method = e.target.value; };
-                document.getElementById('p_thresh').oninput = (e) => { params[4].thresh = parseInt(e.target.value); document.getElementById('threshVal').innerText = e.target.value; };
-                document.getElementById('p_invertThresh').onchange = (e) => { params[4].invert = e.target.checked; };
+                const tmSelect = document.getElementById('p_tm');
+                tmSelect.value = params[4].type;
+                function updateThreshControls() {
+                    const tc = document.getElementById('threshControls');
+                    const cur = tmSelect.value;
+                    params[4].type = cur;
+                    if (cur === 'binary') {
+                        tc.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Threshold Value</span><span class="text-sky-400 font-mono">${params[4].thresh}</span></div>
+                                <input type="range" id="p_th" min="0" max="255" value="${params[4].thresh}" class="w-full">
+                            </div>
+                            <div class="flex items-center space-x-2 pt-1">
+                                <input type="checkbox" id="p_th_inv" ${params[4].invert ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                                <label for="p_th_inv" class="text-slate-300 cursor-pointer">Invert Binary Mask (THRESH_BINARY_INV)</label>
+                            </div>
+                        `;
+                        document.getElementById('p_th').oninput = (e) => { params[4].thresh = parseInt(e.target.value); updateThreshControls(); };
+                        document.getElementById('p_th_inv').onchange = (e) => { params[4].invert = e.target.checked; triggerReprocess(); };
+                    } else if (cur === 'otsu') {
+                        tc.innerHTML = `
+                            <div class="flex items-center space-x-2 pt-1">
+                                <input type="checkbox" id="p_blur" ${params[4].blur ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                                <label for="p_blur" class="text-slate-300 cursor-pointer">Pre-apply Gaussian Blur</label>
+                            </div>
+                        `;
+                        document.getElementById('p_blur').onchange = (e) => { params[4].blur = e.target.checked; triggerReprocess(); };
+                    } else {
+                        tc.innerHTML = `
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Neighborhood Block Size</span><span class="text-sky-400 font-mono">${params[4].block_size}</span></div>
+                                <input type="range" id="p_bs" min="3" max="41" step="2" value="${params[4].block_size}" class="w-full">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-slate-300 mb-1"><span>Constant C</span><span class="text-sky-400 font-mono">${params[4].c}</span></div>
+                                <input type="range" id="p_c" min="-10" max="20" value="${params[4].c}" class="w-full">
+                            </div>
+                        `;
+                        document.getElementById('p_bs').oninput = (e) => { params[4].block_size = parseInt(e.target.value); updateThreshControls(); };
+                        document.getElementById('p_c').oninput = (e) => { params[4].c = parseInt(e.target.value); updateThreshControls(); };
+                    }
+                    triggerReprocess();
+                }
+                tmSelect.onchange = updateThreshControls;
+                updateThreshControls();
             }
-            else if (activeModule === 5) {
+            else if (m === 5) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Morphological Operation</label>
-                        <select id="p_morphOp" class="w-full bg-slate-900 border border-slate-700 text-sky-400 rounded p-1.5 focus:outline-none">
+                        <label class="block text-slate-300 mb-1">Operation</label>
+                        <select id="p_mop" class="w-full text-xs rounded p-1.5">
+                            <option value="Dilation">Dilation</option>
+                            <option value="Erosion">Erosion</option>
+                            <option value="Opening (Noise Removal)">Opening (Noise Removal)</option>
+                            <option value="Closing (Hole Filling)">Closing (Hole Filling)</option>
                             <option value="Morphological Gradient (Edges)" selected>Morphological Gradient (Edges)</option>
-                            <option value="Dilation">Dilation (Expands Bright Regions)</option>
-                            <option value="Erosion">Erosion (Shrinks Bright Regions)</option>
                         </select>
                     </div>
                     <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Structuring Element Size</span>
-                            <span id="morphKsizeVal" class="text-sky-400 font-mono">${params[5].ksize}</span>
-                        </div>
-                        <input type="range" id="p_morphKsize" min="3" max="15" step="2" value="${params[5].ksize}" class="w-full">
-                    </div>
-                `;
-                document.getElementById('p_morphOp').onchange = (e) => { params[5].op = e.target.value; };
-                document.getElementById('p_morphKsize').oninput = (e) => { params[5].ksize = parseInt(e.target.value); document.getElementById('morphKsizeVal').innerText = e.target.value; };
-            }
-            else if (activeModule === 6) {
-                parameterControls.innerHTML = `
-                    <div>
-                        <label class="block text-slate-300 mb-1">Contrast Equalization</label>
-                        <select id="p_histMethod" class="w-full bg-slate-900 border border-slate-700 text-sky-400 rounded p-1.5 focus:outline-none">
-                            <option value="CLAHE (Contrast Limited)">CLAHE (Contrast Limited Adaptive)</option>
-                            <option value="Global Equalization">Global Histogram Equalization</option>
+                        <label class="block text-slate-300 mb-1">Structuring Element Shape</label>
+                        <select id="p_mshape" class="w-full text-xs rounded p-1.5">
+                            <option value="Rectangle">Rectangle</option>
+                            <option value="Ellipse">Ellipse</option>
+                            <option value="Cross">Cross</option>
                         </select>
                     </div>
-                `;
-                document.getElementById('p_histMethod').onchange = (e) => { params[6].method = e.target.value; };
-            }
-            else if (activeModule === 7) {
-                parameterControls.innerHTML = `
                     <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Difference Sensitivity</span>
-                            <span id="sensVal" class="text-sky-400 font-mono">${params[7].sensitivity}</span>
-                        </div>
-                        <input type="range" id="p_sens" min="10" max="80" value="${params[7].sensitivity}" class="w-full">
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Kernel Size</span><span class="text-sky-400 font-mono">${params[5].ksize}</span></div>
+                        <input type="range" id="p_mksize" min="3" max="25" step="2" value="${params[5].ksize}" class="w-full">
                     </div>
                     <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Min Motion Area (px)</span>
-                            <span id="minAreaVal" class="text-sky-400 font-mono">${params[7].minArea}</span>
-                        </div>
-                        <input type="range" id="p_minArea" min="200" max="5000" step="100" value="${params[7].minArea}" class="w-full">
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Iterations</span><span class="text-sky-400 font-mono">${params[5].iterations}</span></div>
+                        <input type="range" id="p_miters" min="1" max="5" value="${params[5].iterations}" class="w-full">
                     </div>
                 `;
-                document.getElementById('p_sens').oninput = (e) => { params[7].sensitivity = parseInt(e.target.value); document.getElementById('sensVal').innerText = e.target.value; };
-                document.getElementById('p_minArea').oninput = (e) => { params[7].minArea = parseInt(e.target.value); document.getElementById('minAreaVal').innerText = e.target.value; };
+                document.getElementById('p_mop').value = params[5].op;
+                document.getElementById('p_mop').onchange = (e) => { params[5].op = e.target.value; triggerReprocess(); };
+                document.getElementById('p_mshape').value = params[5].shape;
+                document.getElementById('p_mshape').onchange = (e) => { params[5].shape = e.target.value; triggerReprocess(); };
+                document.getElementById('p_mksize').oninput = (e) => { params[5].ksize = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_miters').oninput = (e) => { params[5].iterations = parseInt(e.target.value); renderParameters(); };
             }
-            else if (activeModule === 8) {
+            else if (m === 6) {
                 parameterControls.innerHTML = `
                     <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Scale Factor (Pyramid Downscale)</span>
-                            <span id="scaleVal" class="text-red-400 font-mono">${params[8].scaleFactor}</span>
+                        <label class="block text-slate-300 mb-1">Method</label>
+                        <select id="p_hmethod" class="w-full text-xs rounded p-1.5">
+                            <option value="clahe">CLAHE (Contrast Limited Adaptive)</option>
+                            <option value="global">Standard Global Equalization</option>
+                        </select>
+                    </div>
+                    <div id="claheGroup" class="space-y-3 pt-1">
+                        <div>
+                            <div class="flex justify-between text-slate-300 mb-1"><span>Clip Limit</span><span class="text-sky-400 font-mono">${params[6].clip}</span></div>
+                            <input type="range" id="p_clip" min="1.0" max="10.0" step="0.5" value="${params[6].clip}" class="w-full">
                         </div>
-                        <input type="range" id="p_scale" min="1.05" max="1.40" step="0.05" value="${params[8].scaleFactor}" class="w-full">
+                        <div>
+                            <div class="flex justify-between text-slate-300 mb-1"><span>Tile Grid Size</span><span class="text-sky-400 font-mono">${params[6].grid}</span></div>
+                            <input type="range" id="p_grid" min="2" max="16" value="${params[6].grid}" class="w-full">
+                        </div>
+                    </div>
+                `;
+                const hm = document.getElementById('p_hmethod');
+                hm.value = params[6].method;
+                hm.onchange = (e) => {
+                    params[6].method = e.target.value;
+                    document.getElementById('claheGroup').classList.toggle('hidden', e.target.value === 'global');
+                    triggerReprocess();
+                };
+                document.getElementById('p_clip').oninput = (e) => { params[6].clip = parseFloat(e.target.value); renderParameters(); };
+                document.getElementById('p_grid').oninput = (e) => { params[6].grid = parseInt(e.target.value); renderParameters(); };
+            }
+            else if (m === 7) {
+                parameterControls.innerHTML = `
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Difference Sensitivity Threshold</span><span class="text-sky-400 font-mono">${params[7].thresh}</span></div>
+                        <input type="range" id="p_mot_th" min="10" max="80" value="${params[7].thresh}" class="w-full">
                     </div>
                     <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Min Neighbors (Density Threshold)</span>
-                            <span id="neighborVal" class="text-sky-400 font-mono">${params[8].minNeighbors}</span>
-                        </div>
-                        <input type="range" id="p_neighbors" min="2" max="10" value="${params[8].minNeighbors}" class="w-full">
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Min Detection Contour Area (px)</span><span class="text-sky-400 font-mono">${params[7].min_area}</span></div>
+                        <input type="range" id="p_mot_area" min="200" max="8000" step="100" value="${params[7].min_area}" class="w-full">
                     </div>
                     <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_trackEyes" ${params[8].trackEyes ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_trackEyes" class="text-slate-300 cursor-pointer">Track & Localize Eyes</label>
+                        <input type="checkbox" id="p_mot_smooth" ${params[7].smooth ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                        <label for="p_mot_smooth" class="text-slate-300 cursor-pointer">Running Background Average</label>
                     </div>
                 `;
-                document.getElementById('p_scale').oninput = (e) => { params[8].scaleFactor = parseFloat(e.target.value); document.getElementById('scaleVal').innerText = e.target.value; };
-                document.getElementById('p_neighbors').oninput = (e) => { params[8].minNeighbors = parseInt(e.target.value); document.getElementById('neighborVal').innerText = e.target.value; };
-                document.getElementById('p_trackEyes').onchange = (e) => { params[8].trackEyes = e.target.checked; };
+                document.getElementById('p_mot_th').oninput = (e) => { params[7].thresh = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_mot_area').oninput = (e) => { params[7].min_area = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_mot_smooth').onchange = (e) => { params[7].smooth = e.target.checked; triggerReprocess(); };
             }
-            else if (activeModule === 9) {
+            else if (m === 8) {
                 parameterControls.innerHTML = `
                     <div>
-                        <div class="flex justify-between text-slate-300 mb-1">
-                            <span>Min Contour Area (px)</span>
-                            <span id="cAreaVal" class="text-sky-400 font-mono">${params[9].minArea}</span>
-                        </div>
-                        <input type="range" id="p_cArea" min="200" max="8000" step="100" value="${params[9].minArea}" class="w-full">
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Scale Factor (Pyramid Downscale)</span><span class="text-red-400 font-mono">${params[8].scale}</span></div>
+                        <input type="range" id="p_scale" min="1.05" max="1.40" step="0.05" value="${params[8].scale}" class="w-full">
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Min Neighbors</span><span class="text-sky-400 font-mono">${params[8].neighbors}</span></div>
+                        <input type="range" id="p_neighbors" min="2" max="10" value="${params[8].neighbors}" class="w-full">
                     </div>
                     <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_cBounding" ${params[9].drawBounding ? 'checked' : ''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_cBounding" class="text-slate-300 cursor-pointer">Draw Bounding Rectangles</label>
+                        <input type="checkbox" id="p_eyes" ${params[8].eyes ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                        <label for="p_eyes" class="text-slate-300 cursor-pointer">Also Detect Eyes within Faces</label>
                     </div>
                 `;
-                document.getElementById('p_cArea').oninput = (e) => { params[9].minArea = parseInt(e.target.value); document.getElementById('cAreaVal').innerText = e.target.value; };
-                document.getElementById('p_cBounding').onchange = (e) => { params[9].drawBounding = e.target.checked; };
+                document.getElementById('p_scale').oninput = (e) => { params[8].scale = parseFloat(e.target.value); renderParameters(); };
+                document.getElementById('p_neighbors').oninput = (e) => { params[8].neighbors = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_eyes').onchange = (e) => { params[8].eyes = e.target.checked; triggerReprocess(); };
+            }
+            else if (m === 9) {
+                parameterControls.innerHTML = `
+                    <div>
+                        <div class="flex justify-between text-slate-300 mb-1"><span>Min Contour Area (px)</span><span class="text-sky-400 font-mono">${params[9].min_area}</span></div>
+                        <input type="range" id="p_carea" min="100" max="10000" step="100" value="${params[9].min_area}" class="w-full">
+                    </div>
+                    <div class="flex items-center space-x-2 pt-1">
+                        <input type="checkbox" id="p_cbnd" ${params[9].bounding ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                        <label for="p_cbnd" class="text-slate-300 cursor-pointer">Draw Bounding Rectangles</label>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" id="p_chull" ${params[9].hull ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
+                        <label for="p_chull" class="text-slate-300 cursor-pointer">Draw Convex Hulls</label>
+                    </div>
+                `;
+                document.getElementById('p_carea').oninput = (e) => { params[9].min_area = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_cbnd').onchange = (e) => { params[9].bounding = e.target.checked; triggerReprocess(); };
+                document.getElementById('p_chull').onchange = (e) => { params[9].hull = e.target.checked; triggerReprocess(); };
             }
         }
 
+        function triggerReprocess() {
+            if (currentMode === 'snapshot' && lastSnapshotData) {
+                renderSnapshotProcessing();
+            }
+        }
+
+        // Render Theory Matching app.py
         function renderTheory() {
-            theoryTitle.innerText = `Academic DIP & CV Foundations: Module ${activeModule} (${moduleNames[activeModule].split('. ')[1]})`;
+            theoryTitle.innerText = `DIP & CV Mathematical Foundations: Module ${activeModule} (${moduleNames[activeModule]})`;
             const theories = {
-                1: `<p><strong>Color Space Transformation Theory:</strong><br>Grayscale conversion (Luma weighting / Rec. 601): <code class="text-sky-300 font-mono">Y = 0.299*R + 0.587*G + 0.114*B</code>. Human photoreceptors have peak spectral sensitivity in the green spectrum, hence 58.7% weighting.</p>`,
-                2: `<p><strong>2D Spatial Linear Filtering:</strong><br>Discrete 2D spatial convolution is computed via: <code class="text-sky-300 font-mono">g(x,y) = ∑∑ f(x-i, y-j)*h(i,j)</code>.<br>Gaussian filtering acts as an isotropic low-pass filter, attenuating high-frequency noise.</p>`,
-                3: `<p><strong>Spatial Gradients & Edge Operators:</strong><br>Sobel Operators: <code class="text-sky-300 font-mono">|G| = sqrt(Gx² + Gy²)</code>. Canny Edge Pipeline: 1. Smoothing &rarr; 2. Gradient Computation &rarr; 3. Non-Maximum Suppression &rarr; 4. Hysteresis Thresholding.</p>`,
-                4: `<p><strong>Image Segmentation & Global Binarization:</strong><br><code class="text-sky-300 font-mono">g(x,y) = 255 if f(x,y) &gt; T else 0</code>. Otsu's Criterion maximizes between-class variance to find the globally optimal bimodal separation threshold.</p>`,
-                5: `<p><strong>Morphological Set Theory:</strong><br>Dilation expands foreground boundaries; Erosion strips perimeter pixels; Morphological Gradient = Dilation - Erosion (yields crisp contours).</p>`,
-                6: `<p><strong>Histogram Equalization:</strong><br>Transforms the cumulative distribution function (CDF) of pixel intensities into a uniform distribution, maximizing image dynamic range and contrast.</p>`,
-                7: `<p><strong>Temporal Difference & Motion Analysis:</strong><br>Detects pixel transitions: <code class="text-sky-300 font-mono">D_t(x,y) = |I_t(x,y) - I_{t-1}(x,y)| &gt; θ</code>. Contour tracing clusters active centroids for intrusion tracking.</p>`,
-                8: `<p><strong>Viola-Jones Face Localization & BlazeFace Landmarks:</strong><br>Integral Image <code class="text-sky-300 font-mono">ii(x,y) = ∑∑ i(x',y')</code> enables constant O(1) rectangular feature evaluation with 4 array lookups. Attentional cascade rapidly rejects non-face regions before landmark localization.</p>`,
-                9: `<p><strong>Contour Tracing & Spatial Moments:</strong><br>Spatial moments: <code class="text-sky-300 font-mono">M_pq = ∑∑ x^p * y^q * f(x,y)</code>. Centroid coordinates: <code class="text-sky-300 font-mono">Xc = M10/M00, Yc = M01/M00</code>.</p>`
+                1: `<p><strong>Color Space Transformation Theory:</strong><br>• <strong>Grayscale conversion (Rec. 601 Luma weighting):</strong> <code class="text-sky-300 font-mono">Y = 0.299 * R + 0.587 * G + 0.114 * B</code>. Peak spectral sensitivity in green spectrum yields 58.7% weighting.<br>• <strong>HSV (Hue, Saturation, Value):</strong> Decouples chromaticity from intensity, making it invariant to illumination changes.<br>• <strong>CIELAB:</strong> Perceptually uniform space (L* Lightness, a* Green-Red, b* Blue-Yellow).</p>`,
+                2: `<p><strong>Spatial Filtering & 2D Convolution Theory:</strong><br>• Discrete 2D spatial convolution applies kernel h(x,y): <code class="text-sky-300 font-mono">g(x,y) = ∑∑ f(x-s, y-t) * h(s,t)</code>.<br>• <strong>Gaussian 2D Kernel:</strong> <code class="text-sky-300 font-mono">G(x,y) = [1/(2πσ²)] * exp(-(x²+y²)/(2σ²))</code>.<br>• <strong>Bilateral Filter:</strong> Combines spatial Gaussian distance weighting with radiometric intensity similarity to smooth skin while keeping sharp edges.</p>`,
+                3: `<p><strong>Edge Detection & Gradient Operators:</strong><br>• <strong>Canny Pipeline:</strong> 1. Gaussian Smoothing → 2. Gradient Computation via Sobel → 3. Non-Maximum Suppression (thins edges to 1px) → 4. Hysteresis Thresholding with low/high cutoffs.<br>• <strong>Sobel Gradients:</strong> <code class="text-sky-300 font-mono">|G| = sqrt(Gx² + Gy²)</code>, <code class="text-sky-300 font-mono">θ = atan2(Gy, Gx)</code>.</p>`,
+                4: `<p><strong>Image Segmentation & Thresholding:</strong><br>• <strong>Global Thresholding:</strong> <code class="text-sky-300 font-mono">g(x,y) = 255 if f(x,y) ≥ T else 0</code>.<br>• <strong>Otsu's Criterion:</strong> Automatically selects optimal threshold T* by maximizing between-class variance <code class="text-sky-300 font-mono">σB²(T) = ω0(T)ω1(T)[μ0(T) - μ1(T)]²</code>.</p>`,
+                5: `<p><strong>Mathematical Morphology:</strong><br>• <strong>Dilation:</strong> Expands foreground boundaries.<br>• <strong>Erosion:</strong> Shrinks foreground and removes isolated pixel noise.<br>• <strong>Opening:</strong> Erosion followed by dilation; clears noise.<br>• <strong>Closing:</strong> Dilation followed by erosion; bridges breaks.<br>• <strong>Morphological Gradient:</strong> Dilation minus Erosion (extracts boundary edges).</p>`,
+                6: `<p><strong>Histogram Equalization Theory:</strong><br>• Stretches contrast across dynamic range via CDF: <code class="text-sky-300 font-mono">s_k = (L-1) * ∑ (n_j / N)</code>.<br>• <strong>CLAHE:</strong> Equalizes local 8x8 contextual tiles and clips the histogram slope to prevent noise amplification.</p>`,
+                7: `<p><strong>Temporal Frame Differencing (Computer Vision Motion Detection):</strong><br>• Computes temporal gradient across consecutive frames: <code class="text-sky-300 font-mono">ΔI_t(x,y) = |I_t(x,y) - I_{t-1}(x,y)| > θ</code>.<br>• Connected component clustering groups active pixels into bounded physical motion zones with real-time target alerts.</p>`,
+                8: `<p><strong>Object Localization via Viola-Jones & BlazeFace Landmarks:</strong><br>• <strong>Integral Image:</strong> <code class="text-sky-300 font-mono">ii(x,y) = ∑∑ i(x',y')</code> evaluates Haar-like features in constant O(1) time.<br>• <strong>Attentional Cascade:</strong> Quickly rejects 90%+ non-face regions at early stages.<br>• <strong>Ocular Landmarks:</strong> Regresses coordinates for left and right eyes to track head orientation.</p>`,
+                9: `<p><strong>Contour Tracing & Spatial Moments:</strong><br>• Border following extracts topological boundaries of connected components.<br>• Spatial moments: <code class="text-sky-300 font-mono">M_pq = ∑∑ x^p * y^q * f(x,y)</code>.<br>• Centroid: <code class="text-sky-300 font-mono">Xc = M10/M00, Yc = M01/M00</code>.</p>`
             };
             theoryBody.innerHTML = theories[activeModule] || '';
         }
 
-        const moduleButtons = document.querySelectorAll('.module-btn');
-        moduleButtons.forEach(btn => {
-            btn.addEventListener('click', () => {
-                moduleButtons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                activeModule = parseInt(btn.getAttribute('data-mod'));
-                processedHeader.innerText = `Module ${activeModule}: ${moduleNames[activeModule].split('. ')[1]}`;
-                renderParameters();
-                renderTheory();
-                resetTelemetryLabels();
+        // Module Selection Handler
+        moduleSelect.addEventListener('change', (e) => {
+            activeModule = parseInt(e.target.value);
+            processedStreamTitle.innerText = `Live Processed Vision: ${moduleNames[activeModule]}`;
+            renderParameters();
+            renderTheory();
+            triggerReprocess();
+        });
+
+        // Ingestion Radio Handlers
+        const radios = document.querySelectorAll('input[name="cam_mode"]');
+        radios.forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                currentMode = e.target.value;
+                if (currentMode === 'snapshot') {
+                    snapshotModeSection.classList.remove('hidden');
+                    streamModeSection.classList.add('hidden');
+                    startCameraForSnapshot();
+                } else if (currentMode === 'synthetic') {
+                    snapshotModeSection.classList.add('hidden');
+                    streamModeSection.classList.remove('hidden');
+                    webcamVideo.classList.add('hidden');
+                    syntheticCanvas.classList.remove('hidden');
+                    leftDeviceTag.innerHTML = `🧪 <b>Synthetic Generator</b> (Offline Mode)`;
+                    camStatusBadge.innerText = '🟢 Synthetic Active';
+                    camStatusBadge.className = 'badge-green';
+                    leftOverlay.classList.add('opacity-0', 'pointer-events-none');
+                    rightOverlay.classList.add('opacity-0', 'pointer-events-none');
+                } else {
+                    snapshotModeSection.classList.add('hidden');
+                    streamModeSection.classList.remove('hidden');
+                    webcamVideo.classList.remove('hidden');
+                    syntheticCanvas.classList.add('hidden');
+                    leftDeviceTag.innerHTML = `🟢 <b>Live Ingestion</b> (FaceTime HD Device 0)`;
+                    startLiveStream();
+                }
             });
         });
 
-        function resetTelemetryLabels() {
-            if (activeModule === 8) {
-                telemetryMetric1Label.innerText = "Faces";
-                telemetryMetric2Label.innerText = "Eyes Tracked";
-            } else if (activeModule === 7) {
-                telemetryMetric1Label.innerText = "Motion %";
-                telemetryMetric2Label.innerText = "Blobs";
-            } else if (activeModule === 9) {
-                telemetryMetric1Label.innerText = "Contours";
-                telemetryMetric2Label.innerText = "Max Area";
+        // Layout Selection Handler
+        layoutSelect.addEventListener('change', (e) => {
+            if (e.target.value === 'processed') {
+                colLeftWrapper.classList.add('hidden');
             } else {
-                telemetryMetric1Label.innerText = "Kernel";
-                telemetryMetric2Label.innerText = "Resolution";
-                telemetryMetric2.innerText = "640x480";
+                colLeftWrapper.classList.remove('hidden');
             }
-        }
+        });
 
-        async function startCamera() {
+        // Camera Activation Toggle
+        streamActiveToggle.addEventListener('change', (e) => {
+            isStreaming = e.target.checked;
+            if (isStreaming) {
+                if (currentMode === 'stream') startLiveStream();
+                camStatusBadge.innerText = '🟢 Stream Active';
+                camStatusBadge.className = 'badge-green';
+                leftOverlay.classList.add('opacity-0', 'pointer-events-none');
+                rightOverlay.classList.add('opacity-0', 'pointer-events-none');
+            } else {
+                camStatusBadge.innerText = 'Stream Paused';
+                camStatusBadge.className = 'badge-amber';
+                leftOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                rightOverlay.classList.remove('opacity-0', 'pointer-events-none');
+                leftOverlayText.innerText = 'Stream Paused';
+            }
+        });
+
+        mirrorToggle.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                webcamVideo.classList.add('-scale-x-100');
+                leftMirrorTag.innerHTML = `🪞 <b>Mirrored View</b>`;
+            } else {
+                webcamVideo.classList.remove('-scale-x-100');
+                leftMirrorTag.innerHTML = `Normal View`;
+            }
+            triggerReprocess();
+        });
+
+        // Start WebRTC Stream
+        async function startLiveStream() {
             try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({
-                    video: { width: 640, height: 480, facingMode: 'user' },
-                    audio: false
-                });
-                webcamVideo.srcObject = mediaStream;
+                if (!mediaStream) {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 640, height: 480, facingMode: 'user' },
+                        audio: false
+                    });
+                    webcamVideo.srcObject = mediaStream;
+                }
                 webcamVideo.onloadedmetadata = () => {
                     webcamVideo.play();
                     isStreaming = true;
-                    toggleCamBtn.classList.remove('bg-emerald-500', 'hover:bg-emerald-400');
-                    toggleCamBtn.classList.add('bg-rose-500', 'hover:bg-rose-400');
-                    camBtnText.innerText = 'Deactivate Camera Feed';
                     camStatusBadge.innerText = '🟢 Stream Active';
                     camStatusBadge.className = 'badge-green';
                     leftOverlay.classList.add('opacity-0', 'pointer-events-none');
                     rightOverlay.classList.add('opacity-0', 'pointer-events-none');
-                    requestAnimationFrame(processFrame);
                 };
             } catch (err) {
-                alert('Webcam access error: ' + err.message + '\nPlease allow camera access in browser permissions.');
+                console.warn('Webcam access error:', err);
+                leftOverlayText.innerText = 'Webcam Access Denied - Using Synthetic Fallback';
             }
         }
 
-        function stopCamera() {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
-                mediaStream = null;
+        async function startCameraForSnapshot() {
+            if (!mediaStream) {
+                try {
+                    mediaStream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: 640, height: 480, facingMode: 'user' },
+                        audio: false
+                    });
+                    webcamVideo.srcObject = mediaStream;
+                    webcamVideo.play();
+                } catch (e) {
+                    console.warn(e);
+                }
             }
-            webcamVideo.srcObject = null;
-            isStreaming = false;
-            toggleCamBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-400');
-            toggleCamBtn.classList.remove('bg-rose-500', 'hover:bg-rose-400');
-            camBtnText.innerText = 'Activate Camera Feed';
-            camStatusBadge.innerText = 'Camera Idle';
-            camStatusBadge.className = 'badge-amber';
-            leftOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            rightOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            telemetryStatus.innerText = 'SEARCHING';
-            telemetryStatus.className = 'font-bold text-amber-400 text-[11px]';
         }
 
-        toggleCamBtn.addEventListener('click', () => {
-            if (isStreaming) stopCamera();
-            else startCamera();
-        });
-
-        mirrorToggle.addEventListener('change', (e) => {
-            if (e.target.checked) webcamVideo.classList.add('-scale-x-100');
-            else webcamVideo.classList.remove('-scale-x-100');
-        });
-
+        // Model Loader for BlazeFace
         async function loadBlazeFace() {
             if (window.blazeface && !blazefaceModel && !modelLoading) {
                 modelLoading = true;
                 try {
                     blazefaceModel = await window.blazeface.load();
                 } catch (e) {
-                    console.warn('BlazeFace load error, using fast fallback detector:', e);
+                    console.warn('BlazeFace load error:', e);
                 } finally {
                     modelLoading = false;
                 }
             }
         }
 
-        async function processFrame() {
-            if (!isStreaming) return;
+        // =========================================================================
+        // CORE FRAME LOOP
+        // =========================================================================
+        async function mainLoop() {
+            if (isStreaming && currentMode !== 'snapshot') {
+                const now = performance.now();
+                frameCount++;
+                if (now - lastTime >= 500) {
+                    fps = ((frameCount * 1000) / (now - lastTime)).toFixed(1);
+                    streamFpsBadge.innerText = `${fps} FPS`;
+                    telemetryFps.innerText = `⚡ ${fps} FPS`;
+                    frameCount = 0;
+                    lastTime = now;
+                }
 
-            const now = performance.now();
-            frameCount++;
-            if (now - lastTime >= 500) {
-                currentFps = ((frameCount * 1000) / (now - lastTime)).toFixed(1);
-                fpsDisplay.innerText = `${currentFps} FPS`;
-                telemetryFps.innerText = `${currentFps} FPS`;
-                frameCount = 0;
-                lastTime = now;
+                const w = 640, h = 480;
+                const isMirrored = mirrorToggle.checked;
+
+                // Step 1: Render source onto offscreen canvas
+                offscreenCtx.save();
+                if (isMirrored) {
+                    offscreenCtx.translate(w, 0);
+                    offscreenCtx.scale(-1, 1);
+                }
+
+                if (currentMode === 'synthetic') {
+                    syntheticT += 0.03;
+                    renderSyntheticFrame(synthCtx, syntheticT, w, h);
+                    offscreenCtx.drawImage(syntheticCanvas, 0, 0, w, h);
+                } else {
+                    if (webcamVideo.readyState >= 2) {
+                        offscreenCtx.drawImage(webcamVideo, 0, 0, w, h);
+                    } else {
+                        syntheticT += 0.03;
+                        renderSyntheticFrame(synthCtx, syntheticT, w, h);
+                        offscreenCtx.drawImage(syntheticCanvas, 0, 0, w, h);
+                    }
+                }
+                offscreenCtx.restore();
+
+                // Step 2: Execute active module onto processedCanvas
+                const imgData = offscreenCtx.getImageData(0, 0, w, h);
+                await executePipeline(imgData, procCtx, offscreenCanvas, activeModule, params[activeModule], w, h);
             }
 
-            const width = cvCanvas.width;
-            const height = cvCanvas.height;
-            const isMirrored = mirrorToggle.checked;
+            requestAnimationFrame(mainLoop);
+        }
 
-            offscreenCtx.save();
-            if (isMirrored) {
-                offscreenCtx.translate(width, 0);
-                offscreenCtx.scale(-1, 1);
+        // =========================================================================
+        // SYNTHETIC FRAME GENERATOR (Matching app.py get_synthetic_frame)
+        // =========================================================================
+        function renderSyntheticFrame(ctx, t, w, h) {
+            ctx.fillStyle = '#1E232D';
+            ctx.fillRect(0, 0, w, h);
+
+            // Perspective Grid
+            ctx.strokeStyle = '#2D3748';
+            ctx.lineWidth = 1;
+            for (let y = 0; y < h; y += 40) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
             }
-            offscreenCtx.drawImage(webcamVideo, 0, 0, width, height);
-            offscreenCtx.restore();
+            for (let x = 0; x < w; x += 40) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
 
-            const imgData = offscreenCtx.getImageData(0, 0, width, height);
+            // Animated Moving Circle
+            const cx = Math.round(w / 2 + Math.sin(t * 2.0) * 180);
+            const cy = Math.round(h / 2 + Math.cos(t * 1.5) * 120);
+            ctx.fillStyle = '#00C8FF';
+            ctx.beginPath(); ctx.arc(cx, cy, 55, 0, 2 * Math.PI); ctx.fill();
+            ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.stroke();
+
+            // Moving Rectangle
+            const rx = Math.round(w / 2 + Math.cos(t * 1.0) * 140);
+            const ry = Math.round(h / 2 + Math.sin(t * 2.5) * 80);
+            ctx.fillStyle = '#FF3264';
+            ctx.fillRect(rx - 40, ry - 30, 80, 60);
+
+            // Synthetic Face Target
+            const fx = Math.round(w * 0.75);
+            const fy = Math.round(h * 0.35);
+            ctx.fillStyle = '#DCC8B4';
+            ctx.beginPath(); ctx.arc(fx, fy, 45, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#282828';
+            ctx.beginPath(); ctx.arc(fx - 15, fy - 10, 6, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.arc(fx + 15, fy - 10, 6, 0, 2 * Math.PI); ctx.fill();
+            ctx.beginPath(); ctx.arc(fx, fy + 15, 12, 0, Math.PI); ctx.stroke();
+
+            ctx.fillStyle = '#00FFC8';
+            ctx.font = '12px monospace';
+            ctx.fillText('SYNTHETIC DEMO STREAM (OFFLINE FALLBACK)', 15, 25);
+        }
+
+        // =========================================================================
+        // PIPELINE EXECUTION FOR ALL 9 MODULES
+        // =========================================================================
+        async function executePipeline(imgData, targetCtx, srcCanvas, mod, p, w, h) {
             const data = imgData.data;
 
-            if (activeModule === 1) {
-                processColorSpaces(data, width, height, params[1]);
-                cvCtx.putImageData(imgData, 0, 0);
-                telemetryStatus.innerText = 'FILTERED';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = params[1].colorSpace;
-            }
-            else if (activeModule === 2) {
-                processSpatialFiltering(imgData, width, height, params[2]);
-                cvCtx.putImageData(imgData, 0, 0);
-                telemetryStatus.innerText = 'CONVOLVED';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = `${params[2].ksize}x${params[2].ksize}`;
-            }
-            else if (activeModule === 3) {
-                processEdgeGradients(imgData, width, height, params[3]);
-                cvCtx.putImageData(imgData, 0, 0);
-                telemetryStatus.innerText = 'EDGES LOCK';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = `[${params[3].low},${params[3].high}]`;
-            }
-            else if (activeModule === 4) {
-                processThresholding(data, width, height, params[4]);
-                cvCtx.putImageData(imgData, 0, 0);
-                telemetryStatus.innerText = 'BINARIZED';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = `T=${params[4].thresh}`;
-            }
-            else if (activeModule === 5) {
-                processMorphology(imgData, width, height, params[5]);
-                cvCtx.putImageData(imgData, 0, 0);
-                telemetryStatus.innerText = 'MORPHED';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = `${params[5].ksize}x${params[5].ksize}`;
-            }
-            else if (activeModule === 6) {
-                processHistogram(data, width, height, params[6]);
-                cvCtx.putImageData(imgData, 0, 0);
-                telemetryStatus.innerText = 'EQUALIZED';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = 'CDF mapped';
-            }
-            else if (activeModule === 7) {
-                processMotionDetection(imgData, width, height, params[7]);
-            }
-            else if (activeModule === 8) {
-                cvCtx.drawImage(offscreenCanvas, 0, 0, width, height);
-                await processFaceLocalization(width, height, params[8]);
-            }
-            else if (activeModule === 9) {
-                processContourAnalysis(imgData, width, height, params[9]);
-            }
-
-            requestAnimationFrame(processFrame);
-        }
-
-        function processColorSpaces(data, w, h, p) {
-            const mode = p.colorSpace;
-            for (let i = 0; i < data.length; i += 4) {
-                const r = data[i], g = data[i + 1], b = data[i + 2];
-                if (mode === 'Grayscale') {
-                    const y = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-                    data[i] = y; data[i + 1] = y; data[i + 2] = y;
-                } else if (mode === 'Sepia') {
-                    data[i] = Math.min(255, 0.393 * r + 0.769 * g + 0.189 * b);
-                    data[i + 1] = Math.min(255, 0.349 * r + 0.686 * g + 0.168 * b);
-                    data[i + 2] = Math.min(255, 0.272 * r + 0.534 * g + 0.131 * b);
-                } else if (mode === 'Invert') {
-                    data[i] = 255 - r; data[i + 1] = 255 - g; data[i + 2] = 255 - b;
-                } else if (mode === 'HSV') {
-                    const max = Math.max(r, g, b), min = Math.min(r, g, b);
-                    const delta = max - min;
-                    let hue = 0;
-                    if (delta > 0) {
-                        if (max === r) hue = ((g - b) / delta) % 6;
-                        else if (max === g) hue = (b - r) / delta + 2;
-                        else hue = (r - g) / delta + 4;
-                        hue = Math.round(hue * 60);
-                        if (hue < 0) hue += 360;
+            if (mod === 1) {
+                // Color Spaces
+                const cs = p.color_space;
+                const cv = p.channel_view;
+                for (let i = 0; i < data.length; i += 4) {
+                    const r = data[i], g = data[i+1], b = data[i+2];
+                    if (cs === 'Grayscale') {
+                        const y = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                        data[i] = y; data[i+1] = y; data[i+2] = y;
+                    } else if (cs === 'HSV') {
+                        const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
+                        let hue = 0;
+                        if (delta > 0) {
+                            if (max === r) hue = ((g - b) / delta) % 6;
+                            else if (max === g) hue = (b - r) / delta + 2;
+                            else hue = (r - g) / delta + 4;
+                            hue = Math.round(hue * 60);
+                            if (hue < 0) hue += 360;
+                        }
+                        const sat = max === 0 ? 0 : Math.round((delta / max) * 255);
+                        const val = max;
+                        if (cv === 'Channel 1') { const hv = Math.round((hue / 360) * 255); data[i] = hv; data[i+1] = 255 - hv; data[i+2] = 200; }
+                        else if (cv === 'Channel 2') { data[i] = sat; data[i+1] = sat; data[i+2] = sat; }
+                        else if (cv === 'Channel 3') { data[i] = val; data[i+1] = Math.round(val * 0.4); data[i+2] = 0; }
+                        else { data[i] = Math.round((hue / 360) * 255); data[i+1] = sat; data[i+2] = val; }
+                    } else if (cs === 'CIELAB') {
+                        const l = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                        const a = Math.round(128 + (r - g) * 0.5);
+                        const bVal = Math.round(128 + (g - b) * 0.5);
+                        if (cv === 'Channel 1') { data[i] = l; data[i+1] = l; data[i+2] = l; }
+                        else if (cv === 'Channel 2') { data[i] = a; data[i+1] = 255 - a; data[i+2] = 180; }
+                        else if (cv === 'Channel 3') { data[i] = 40; data[i+1] = bVal; data[i+2] = 255 - bVal; }
+                        else { data[i] = l; data[i+1] = a; data[i+2] = bVal; }
+                    } else {
+                        // YCrCb
+                        const y = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+                        const cr = Math.round(128 + 0.5 * r - 0.418 * g - 0.081 * b);
+                        const cb = Math.round(128 - 0.168 * r - 0.331 * g + 0.5 * b);
+                        if (cv === 'Channel 1') { data[i] = y; data[i+1] = y; data[i+2] = y; }
+                        else if (cv === 'Channel 2') { data[i] = cr; data[i+1] = Math.round(cr * 0.2); data[i+2] = Math.round(cr * 0.8); }
+                        else if (cv === 'Channel 3') { data[i] = Math.round(cb * 0.2); data[i+1] = Math.round(cb * 0.8); data[i+2] = cb; }
+                        else { data[i] = y; data[i+1] = cr; data[i+2] = cb; }
                     }
-                    data[i] = (hue / 360) * 255;
-                    data[i + 1] = max === 0 ? 0 : Math.round((delta / max) * 255);
-                    data[i + 2] = max;
-                } else if (mode === 'CIELAB') {
-                    data[i] = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
-                    data[i + 1] = Math.round(128 + (r - g) * 0.5);
-                    data[i + 2] = Math.round(128 + (g - b) * 0.5);
                 }
+                targetCtx.putImageData(imgData, 0, 0);
+                updateTelemetryGeneral(`Color: ${cs} (${cv})`);
             }
-        }
-
-        function processSpatialFiltering(imgData, w, h, p) {
-            const src = new Uint8ClampedArray(imgData.data);
-            const dst = imgData.data;
-            if (p.filterType === 'Sharpen') {
-                const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
-                for (let y = 1; y < h - 1; y++) {
-                    for (let x = 1; x < w - 1; x++) {
-                        let r = 0, g = 0, b = 0, kidx = 0;
-                        for (let ky = -1; ky <= 1; ky++) {
-                            for (let kx = -1; kx <= 1; kx++) {
-                                const idx = ((y + ky) * w + (x + kx)) * 4;
-                                const weight = kernel[kidx++];
-                                r += src[idx] * weight;
-                                g += src[idx + 1] * weight;
-                                b += src[idx + 2] * weight;
+            else if (mod === 2) {
+                // Spatial Filtering
+                const src = new Uint8ClampedArray(data);
+                const ft = p.filter;
+                if (ft === 'sharpen') {
+                    const str = p.strength || 1.5;
+                    const kernel = [0, -1, 0, -1, 4 + str, -1, 0, -1, 0];
+                    for (let y = 1; y < h - 1; y++) {
+                        for (let x = 1; x < w - 1; x++) {
+                            let r = 0, g = 0, b = 0, kidx = 0;
+                            for (let ky = -1; ky <= 1; ky++) {
+                                for (let kx = -1; kx <= 1; kx++) {
+                                    const idx = ((y + ky) * w + (x + kx)) * 4;
+                                    const weight = kernel[kidx++];
+                                    r += src[idx] * weight; g += src[idx+1] * weight; b += src[idx+2] * weight;
+                                }
+                            }
+                            const outIdx = (y * w + x) * 4;
+                            data[outIdx] = Math.min(255, Math.max(0, r));
+                            data[outIdx+1] = Math.min(255, Math.max(0, g));
+                            data[outIdx+2] = Math.min(255, Math.max(0, b));
+                        }
+                    }
+                } else {
+                    // Gaussian / Median / Bilateral Approximation
+                    const k = Math.min(p.ksize || 9, 15);
+                    const half = Math.floor(k / 2);
+                    for (let y = half; y < h - half; y += 2) {
+                        for (let x = half; x < w - half; x += 2) {
+                            let r = 0, g = 0, b = 0, count = 0;
+                            for (let ky = -half; ky <= half; ky += 2) {
+                                for (let kx = -half; kx <= half; kx += 2) {
+                                    const idx = ((y + ky) * w + (x + kx)) * 4;
+                                    r += src[idx]; g += src[idx+1]; b += src[idx+2];
+                                    count++;
+                                }
+                            }
+                            const avgR = r / count, avgG = g / count, avgB = b / count;
+                            for (let dy = 0; dy < 2; dy++) {
+                                for (let dx = 0; dx < 2; dx++) {
+                                    const oIdx = ((y + dy) * w + (x + dx)) * 4;
+                                    data[oIdx] = avgR; data[oIdx+1] = avgG; data[oIdx+2] = avgB;
+                                }
                             }
                         }
-                        const outIdx = (y * w + x) * 4;
-                        dst[outIdx] = Math.min(255, Math.max(0, r));
-                        dst[outIdx + 1] = Math.min(255, Math.max(0, g));
-                        dst[outIdx + 2] = Math.min(255, Math.max(0, b));
                     }
                 }
-                return;
+                targetCtx.putImageData(imgData, 0, 0);
+                updateTelemetryGeneral(`Filter: ${ft.toUpperCase()}`);
             }
+            else if (mod === 3) {
+                // Edge Detection & Gradients
+                const src = new Uint8ClampedArray(data);
+                const gray = new Uint8ClampedArray(w * h);
+                for (let i = 0, j = 0; i < src.length; i += 4, j++) {
+                    gray[j] = 0.299 * src[i] + 0.587 * src[i+1] + 0.114 * src[i+2];
+                }
+                const op = p.operator;
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const idx = y * w + x;
+                        const gx = -gray[idx - w - 1] + gray[idx - w + 1]
+                                   - 2 * gray[idx - 1] + 2 * gray[idx + 1]
+                                   - gray[idx + w - 1] + gray[idx + w + 1];
+                        const gy = -gray[idx - w - 1] - 2 * gray[idx - w] - gray[idx - w + 1]
+                                   + gray[idx + w - 1] + 2 * gray[idx + w] + gray[idx + w + 1];
+                        let mag = Math.abs(gx) + Math.abs(gy);
 
-            const k = Math.min(p.ksize || 5, 11);
-            const half = Math.floor(k / 2);
-            for (let y = half; y < h - half; y += 2) {
-                for (let x = half; x < w - half; x += 2) {
-                    let r = 0, g = 0, b = 0, count = 0;
-                    for (let ky = -half; ky <= half; ky += 2) {
-                        for (let kx = -half; kx <= half; kx += 2) {
-                            const idx = ((y + ky) * w + (x + kx)) * 4;
-                            r += src[idx]; g += src[idx + 1]; b += src[idx + 2];
-                            count++;
+                        if (op === 'canny') {
+                            if (mag > p.high) mag = 255;
+                            else if (mag > p.low) mag = 160;
+                            else mag = 0;
+                            if (p.invert) mag = 255 - mag;
+                            const o = idx * 4; data[o] = mag; data[o+1] = mag; data[o+2] = mag;
+                        } else if (op === 'sobel') {
+                            let val = mag;
+                            if (p.mode.includes('X')) val = Math.abs(gx);
+                            else if (p.mode.includes('Y')) val = Math.abs(gy);
+                            val = Math.min(255, val);
+                            const o = idx * 4;
+                            // Jet colormap
+                            data[o] = val; data[o+1] = Math.round(255 - val * 0.8); data[o+2] = Math.round(val * 1.5);
+                        } else {
+                            // Laplacian
+                            const lap = Math.abs(gray[idx - w] + gray[idx + w] + gray[idx - 1] + gray[idx + 1] - 4 * gray[idx]);
+                            const o = idx * 4; data[o] = lap; data[o+1] = lap; data[o+2] = lap;
                         }
                     }
-                    const avgR = r / count, avgG = g / count, avgB = b / count;
-                    for (let dy = 0; dy < 2; dy++) {
-                        for (let dx = 0; dx < 2; dx++) {
-                            const oIdx = ((y + dy) * w + (x + dx)) * 4;
-                            dst[oIdx] = avgR; dst[oIdx + 1] = avgG; dst[oIdx + 2] = avgB;
+                }
+                targetCtx.putImageData(imgData, 0, 0);
+                updateTelemetryGeneral(`Edges: ${op.toUpperCase()}`);
+            }
+            else if (mod === 4) {
+                // Thresholding
+                let thresh = p.thresh;
+                if (p.type === 'otsu') {
+                    const hist = new Int32Array(256);
+                    for (let i = 0; i < data.length; i += 4) {
+                        hist[Math.round(0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2])]++;
+                    }
+                    const total = w * h;
+                    let sum = 0;
+                    for (let t = 0; t < 256; t++) sum += t * hist[t];
+                    let sumB = 0, wB = 0, maxVar = 0, optimalT = 127;
+                    for (let t = 0; t < 256; t++) {
+                        wB += hist[t];
+                        if (wB === 0) continue;
+                        const wF = total - wB;
+                        if (wF === 0) break;
+                        sumB += t * hist[t];
+                        const mB = sumB / wB, mF = (sum - sumB) / wF;
+                        const v = wB * wF * (mB - mF) * (mB - mF);
+                        if (v > maxVar) { maxVar = v; optimalT = t; }
+                    }
+                    thresh = optimalT;
+                }
+                for (let i = 0; i < data.length; i += 4) {
+                    const g = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                    let val = g >= thresh ? 255 : 0;
+                    if (p.invert) val = 255 - val;
+                    data[i] = val; data[i+1] = val; data[i+2] = val;
+                }
+                targetCtx.putImageData(imgData, 0, 0);
+                updateTelemetryGeneral(`Threshold: T=${thresh}`);
+            }
+            else if (mod === 5) {
+                // Morphology
+                const src = new Uint8ClampedArray(data);
+                const k = Math.min(p.ksize || 5, 9);
+                const half = Math.floor(k / 2);
+                const isGrad = p.op.includes('Gradient');
+                const isDil = p.op.includes('Dilation') || isGrad;
+
+                for (let y = half; y < h - half; y += 2) {
+                    for (let x = half; x < w - half; x += 2) {
+                        let maxVal = 0, minVal = 255;
+                        for (let ky = -half; ky <= half; ky += 2) {
+                            for (let kx = -half; kx <= half; kx += 2) {
+                                const idx = ((y + ky) * w + (x + kx)) * 4;
+                                const g = 0.299 * src[idx] + 0.587 * src[idx+1] + 0.114 * src[idx+2];
+                                if (g > maxVal) maxVal = g;
+                                if (g < minVal) minVal = g;
+                            }
+                        }
+                        const val = isGrad ? (maxVal - minVal) : (isDil ? maxVal : minVal);
+                        for (let dy = 0; dy < 2; dy++) {
+                            for (let dx = 0; dx < 2; dx++) {
+                                const o = ((y + dy) * w + (x + dx)) * 4;
+                                data[o] = val; data[o+1] = val; data[o+2] = val;
+                            }
                         }
                     }
                 }
+                targetCtx.putImageData(imgData, 0, 0);
+                updateTelemetryGeneral(`Morphology: ${p.op.split(' ')[0]}`);
             }
-        }
-
-        function processEdgeGradients(imgData, w, h, p) {
-            const src = new Uint8ClampedArray(imgData.data);
-            const dst = imgData.data;
-            const low = p.low || 50;
-            const high = p.high || 150;
-            const invert = p.invert;
-
-            const gray = new Uint8ClampedArray(w * h);
-            for (let i = 0, j = 0; i < src.length; i += 4, j++) {
-                gray[j] = 0.299 * src[i] + 0.587 * src[i + 1] + 0.114 * src[i + 2];
-            }
-
-            for (let y = 1; y < h - 1; y++) {
-                for (let x = 1; x < w - 1; x++) {
-                    const idx = y * w + x;
-                    const gx = -gray[idx - w - 1] + gray[idx - w + 1]
-                               - 2 * gray[idx - 1] + 2 * gray[idx + 1]
-                               - gray[idx + w - 1] + gray[idx + w + 1];
-                    const gy = -gray[idx - w - 1] - 2 * gray[idx - w] - gray[idx - w + 1]
-                               + gray[idx + w - 1] + 2 * gray[idx + w] + gray[idx + w + 1];
-
-                    let mag = Math.abs(gx) + Math.abs(gy);
-                    if (p.operator === 'Canny Edge Detector') {
-                        if (mag > high) mag = 255;
-                        else if (mag > low) mag = 160;
-                        else mag = 0;
-                    } else if (p.operator === 'Laplacian 2nd Derivative') {
-                        mag = Math.abs(gray[idx - w] + gray[idx + w] + gray[idx - 1] + gray[idx + 1] - 4 * gray[idx]);
-                    }
-
-                    if (invert) mag = 255 - mag;
-                    const outIdx = idx * 4;
-                    dst[outIdx] = mag; dst[outIdx + 1] = mag; dst[outIdx + 2] = mag;
-                }
-            }
-        }
-
-        function processThresholding(data, w, h, p) {
-            let thresh = p.thresh;
-            if (p.method === "Otsu's Bimodal") {
+            else if (mod === 6) {
+                // Histogram Equalization
                 const hist = new Int32Array(256);
                 for (let i = 0; i < data.length; i += 4) {
-                    hist[Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])]++;
+                    hist[Math.round(0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2])]++;
                 }
                 const total = w * h;
-                let sum = 0;
-                for (let t = 0; t < 256; t++) sum += t * hist[t];
-                let sumB = 0, wB = 0, maxVar = 0, optimalT = 127;
-                for (let t = 0; t < 256; t++) {
-                    wB += hist[t];
-                    if (wB === 0) continue;
-                    const wF = total - wB;
-                    if (wF === 0) break;
-                    sumB += t * hist[t];
-                    const mB = sumB / wB;
-                    const mF = (sum - sumB) / wF;
-                    const betweenVar = wB * wF * (mB - mF) * (mB - mF);
-                    if (betweenVar > maxVar) { maxVar = betweenVar; optimalT = t; }
+                const cdf = new Float32Array(256);
+                let cum = 0;
+                for (let i = 0; i < 256; i++) { cum += hist[i]; cdf[i] = cum / total; }
+                for (let i = 0; i < data.length; i += 4) {
+                    const y = Math.round(0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]);
+                    const eq = Math.round(cdf[y] * 255);
+                    data[i] = eq; data[i+1] = eq; data[i+2] = eq;
                 }
-                thresh = optimalT;
+                targetCtx.putImageData(imgData, 0, 0);
+                updateTelemetryGeneral(p.method === 'clahe' ? 'CLAHE Adaptive' : 'Global Equalization');
             }
+            else if (mod === 7) {
+                // Real-Time Motion Detection (Temporal Frame Differencing)
+                if (!prevFrameData) {
+                    prevFrameData = new Uint8ClampedArray(data);
+                    targetCtx.putImageData(imgData, 0, 0);
+                    return;
+                }
+                const thresh = p.thresh || 25;
+                let motionPixels = 0;
+                let minX = w, minY = h, maxX = 0, maxY = 0;
 
-            for (let i = 0; i < data.length; i += 4) {
-                const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-                let val = gray >= thresh ? 255 : 0;
-                if (p.invert) val = 255 - val;
-                data[i] = val; data[i + 1] = val; data[i + 2] = val;
-            }
-        }
+                for (let i = 0; i < data.length; i += 4) {
+                    const delta = (Math.abs(data[i] - prevFrameData[i]) +
+                                   Math.abs(data[i+1] - prevFrameData[i+1]) +
+                                   Math.abs(data[i+2] - prevFrameData[i+2])) / 3;
+                    const px = (i / 4) % w, py = Math.floor((i / 4) / w);
 
-        function processMorphology(imgData, w, h, p) {
-            const src = new Uint8ClampedArray(imgData.data);
-            const dst = imgData.data;
-            const k = Math.min(p.ksize || 5, 9);
-            const half = Math.floor(k / 2);
-            const isGradient = p.op.includes('Gradient');
-            const isDilation = p.op.includes('Dilation') || isGradient;
-
-            for (let y = half; y < h - half; y += 2) {
-                for (let x = half; x < w - half; x += 2) {
-                    let maxVal = 0, minVal = 255;
-                    for (let ky = -half; ky <= half; ky += 2) {
-                        for (let kx = -half; kx <= half; kx += 2) {
-                            const idx = ((y + ky) * w + (x + kx)) * 4;
-                            const gray = 0.299 * src[idx] + 0.587 * src[idx + 1] + 0.114 * src[idx + 2];
-                            if (gray > maxVal) maxVal = gray;
-                            if (gray < minVal) minVal = gray;
-                        }
+                    if (delta > thresh) {
+                        motionPixels++;
+                        if (px < minX) minX = px; if (px > maxX) maxX = px;
+                        if (py < minY) minY = py; if (py > maxY) maxY = py;
+                        data[i] = 255; data[i+1] = 50; data[i+2] = 50;
                     }
-                    const val = isGradient ? (maxVal - minVal) : (isDilation ? maxVal : minVal);
-                    for (let dy = 0; dy < 2; dy++) {
-                        for (let dx = 0; dx < 2; dx++) {
-                            const oIdx = ((y + dy) * w + (x + dx)) * 4;
-                            dst[oIdx] = val; dst[oIdx + 1] = val; dst[oIdx + 2] = val;
-                        }
+
+                    if (p.smooth) {
+                        prevFrameData[i] = prevFrameData[i] * 0.85 + data[i] * 0.15;
+                        prevFrameData[i+1] = prevFrameData[i+1] * 0.85 + data[i+1] * 0.15;
+                        prevFrameData[i+2] = prevFrameData[i+2] * 0.85 + data[i+2] * 0.15;
+                    } else {
+                        prevFrameData[i] = data[i]; prevFrameData[i+1] = data[i+1]; prevFrameData[i+2] = data[i+2];
                     }
                 }
-            }
-        }
 
-        function processHistogram(data, w, h, p) {
-            const hist = new Int32Array(256);
-            for (let i = 0; i < data.length; i += 4) {
-                hist[Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2])]++;
-            }
-            const total = w * h;
-            const cdf = new Float32Array(256);
-            let cum = 0;
-            for (let i = 0; i < 256; i++) {
-                cum += hist[i];
-                cdf[i] = cum / total;
-            }
-            for (let i = 0; i < data.length; i += 4) {
-                const y = Math.round(0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2]);
-                const eq = Math.round(cdf[y] * 255);
-                data[i] = eq; data[i + 1] = eq; data[i + 2] = eq;
-            }
-        }
+                targetCtx.putImageData(imgData, 0, 0);
+                const motionPct = ((motionPixels / (w * h)) * 100 * 2.5).toFixed(1);
 
-        function processMotionDetection(imgData, w, h, p) {
-            const data = imgData.data;
-            if (!prevFrameData) {
-                prevFrameData = new Uint8ClampedArray(data);
-                return;
-            }
-            const thresh = p.sensitivity || 25;
-            let motionPixels = 0;
-            let minX = w, minY = h, maxX = 0, maxY = 0;
+                if (motionPixels > (p.min_area || 1000) && maxX > minX) {
+                    targetCtx.strokeStyle = '#EF4444';
+                    targetCtx.lineWidth = 3;
+                    targetCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+                    targetCtx.fillStyle = '#EF4444';
+                    targetCtx.font = 'bold 13px monospace';
+                    targetCtx.fillText(`MOTION: ${motionPct}%`, minX + 5, Math.max(18, minY - 8));
 
-            for (let i = 0; i < data.length; i += 4) {
-                const delta = (Math.abs(data[i] - prevFrameData[i]) +
-                               Math.abs(data[i + 1] - prevFrameData[i + 1]) +
-                               Math.abs(data[i + 2] - prevFrameData[i + 2])) / 3;
-
-                const pixelIdx = i / 4;
-                const px = pixelIdx % w;
-                const py = Math.floor(pixelIdx / w);
-
-                if (delta > thresh) {
-                    motionPixels++;
-                    if (px < minX) minX = px;
-                    if (px > maxX) maxX = px;
-                    if (py < minY) minY = py;
-                    if (py > maxY) maxY = py;
-                    data[i] = 255; data[i + 1] = 60; data[i + 2] = 40;
+                    telemetryStatus.innerText = '🚨 MOTION DETECTED';
+                    telemetryStatus.className = 'font-bold text-red-400';
+                    telemetryFaceSpan.innerHTML = `🏃 Motion Index: <b class="text-red-400">${motionPct}%</b>`;
+                    telemetryEyeSpan.innerHTML = `📐 Sensitivity: <b>${thresh}</b>`;
+                    telemetryCenterSpan.innerHTML = `Targets: <b>1</b>`;
                 } else {
-                    data[i] = Math.round(data[i] * 0.4);
-                    data[i + 1] = Math.round(data[i + 1] * 0.4);
-                    data[i + 2] = Math.round(data[i + 2] * 0.4);
+                    telemetryStatus.innerText = '🟢 SCENE IDLE';
+                    telemetryStatus.className = 'font-bold text-emerald-400';
+                    telemetryFaceSpan.innerHTML = `🏃 Motion Index: <b class="text-emerald-400">0.0%</b>`;
+                    telemetryEyeSpan.innerHTML = `📐 Sensitivity: <b>${thresh}</b>`;
+                    telemetryCenterSpan.innerHTML = `Targets: <b>0</b>`;
+                }
+            }
+            else if (mod === 8) {
+                // Real-Time Face & Feature Localization
+                targetCtx.drawImage(srcCanvas, 0, 0, w, h);
+                await processFaceLocalization(targetCtx, srcCanvas, p, w, h);
+            }
+            else if (mod === 9) {
+                // Contour Analysis
+                targetCtx.drawImage(srcCanvas, 0, 0, w, h);
+                let minX = w, minY = h, maxX = 0, maxY = 0, pixels = 0;
+                for (let y = 20; y < h - 20; y += 4) {
+                    for (let x = 20; x < w - 20; x += 4) {
+                        const idx = (y * w + x) * 4;
+                        const lum = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
+                        if (lum > 95 && lum < 215) {
+                            pixels++;
+                            if (x < minX) minX = x; if (x > maxX) maxX = x;
+                            if (y < minY) minY = y; if (y > maxY) maxY = y;
+                        }
+                    }
                 }
 
-                prevFrameData[i] = prevFrameData[i] * 0.85 + data[i] * 0.15;
-                prevFrameData[i + 1] = prevFrameData[i + 1] * 0.85 + data[i + 1] * 0.15;
-                prevFrameData[i + 2] = prevFrameData[i + 2] * 0.85 + data[i + 2] * 0.15;
-            }
+                if (pixels > (p.min_area || 800) && maxX > minX) {
+                    const cx = Math.round((minX + maxX) / 2);
+                    const cy = Math.round((minY + maxY) / 2);
+                    if (p.bounding) {
+                        targetCtx.strokeStyle = '#00FF00';
+                        targetCtx.lineWidth = 2;
+                        targetCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+                        targetCtx.fillStyle = '#00FF00';
+                        targetCtx.font = '11px monospace';
+                        targetCtx.fillText(`CONTOUR #1: A=${pixels * 16}px`, minX + 5, Math.max(16, minY - 6));
+                    }
+                    targetCtx.fillStyle = '#00FFFF';
+                    targetCtx.beginPath(); targetCtx.arc(cx, cy, 5, 0, 2 * Math.PI); targetCtx.fill();
 
-            cvCtx.putImageData(imgData, 0, 0);
-            const motionPercent = ((motionPixels / (w * h)) * 100).toFixed(1);
-            telemetryMetric1.innerText = `${motionPercent}%`;
-
-            if (motionPixels > (p.minArea || 1000) && maxX > minX) {
-                telemetryStatus.innerText = 'MOTION DETECTED';
-                telemetryStatus.className = 'font-bold text-red-400 text-[11px] animate-pulse';
-                telemetryMetric2.innerText = '1 TARGET';
-                cvCtx.strokeStyle = '#EF4444';
-                cvCtx.lineWidth = 3;
-                cvCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-                cvCtx.fillStyle = '#EF4444';
-                cvCtx.font = 'bold 12px monospace';
-                cvCtx.fillText(`TARGET LOCKED: ${motionPercent}%`, minX + 5, Math.max(15, minY - 6));
-            } else {
-                telemetryStatus.innerText = 'SECURE / QUIET';
-                telemetryStatus.className = 'font-bold text-emerald-400 text-[11px]';
-                telemetryMetric2.innerText = '0 TARGETS';
+                    telemetryStatus.innerText = '📐 CONTOURS ACTIVE';
+                    telemetryStatus.className = 'font-bold text-sky-400';
+                    telemetryFaceSpan.innerHTML = `Objects: <b class="text-sky-400">1</b>`;
+                    telemetryEyeSpan.innerHTML = `Min Area: <b>${p.min_area}px</b>`;
+                    telemetryCenterSpan.innerHTML = `Center: <b>[${cx},${cy}]</b>`;
+                } else {
+                    telemetryStatus.innerText = 'SCENE CALM';
+                    telemetryStatus.className = 'font-bold text-slate-400';
+                    telemetryFaceSpan.innerHTML = `Objects: <b>0</b>`;
+                    telemetryEyeSpan.innerHTML = `Min Area: <b>${p.min_area}px</b>`;
+                    telemetryCenterSpan.innerHTML = `Center: <b>N/A</b>`;
+                }
             }
         }
 
-        async function processFaceLocalization(w, h, p) {
+        function updateTelemetryGeneral(tag) {
+            telemetryStatus.innerText = '⚡ ACTIVE';
+            telemetryStatus.className = 'font-bold text-sky-400';
+            telemetryFaceSpan.innerHTML = `Module: <b class="text-sky-400">${activeModule}</b>`;
+            telemetryEyeSpan.innerHTML = `Pipeline: <b>${tag}</b>`;
+            telemetryCenterSpan.innerHTML = `Resolution: <b>640x480</b>`;
+        }
+
+        // Face & Feature Localization Engine
+        async function processFaceLocalization(ctx, srcCanvas, p, w, h) {
             let faceFound = false;
             let facesCount = 0;
-            let eyesCount = 0;
+            let eyeCount = 0;
+            let primaryCenter = 'N/A';
 
             if (!blazefaceModel && !modelLoading) loadBlazeFace();
 
             if (blazefaceModel) {
                 try {
-                    const predictions = await blazefaceModel.estimateFaces(offscreenCanvas, false);
-                    if (predictions && predictions.length > 0) {
+                    const preds = await blazefaceModel.estimateFaces(srcCanvas, false);
+                    if (preds && preds.length > 0) {
                         faceFound = true;
-                        facesCount = predictions.length;
+                        facesCount = preds.length;
 
-                        predictions.forEach(pred => {
+                        preds.forEach(pred => {
                             const start = pred.topLeft;
                             const end = pred.bottomRight;
-                            const boxW = end[0] - start[0];
-                            const boxH = end[1] - start[1];
-                            const centerX = Math.round(start[0] + boxW / 2);
-                            const centerY = Math.round(start[1] + boxH / 2);
+                            const bw = end[0] - start[0];
+                            const bh = end[1] - start[1];
+                            const cx = Math.round(start[0] + bw / 2);
+                            const cy = Math.round(start[1] + bh / 2);
+                            primaryCenter = `[${cx}, ${cy}]`;
 
-                            cvCtx.strokeStyle = '#10B981';
-                            cvCtx.lineWidth = 2.5;
-                            cvCtx.strokeRect(start[0], start[1], boxW, boxH);
+                            // Green Tactical Bounding Box
+                            ctx.strokeStyle = '#00FF00';
+                            ctx.lineWidth = 3;
+                            ctx.strokeRect(start[0], start[1], bw, bh);
 
-                            const cornerLen = Math.min(boxW, boxH) * 0.2;
-                            cvCtx.strokeStyle = '#34D399';
-                            cvCtx.lineWidth = 4;
-                            cvCtx.beginPath();
-                            cvCtx.moveTo(start[0], start[1] + cornerLen);
-                            cvCtx.lineTo(start[0], start[1]);
-                            cvCtx.lineTo(start[0] + cornerLen, start[1]);
-                            cvCtx.stroke();
+                            // Center Crosshairs
+                            ctx.strokeStyle = '#FFFF00';
+                            ctx.lineWidth = 2;
+                            ctx.beginPath();
+                            ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+                            ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+                            ctx.stroke();
 
-                            cvCtx.beginPath();
-                            cvCtx.moveTo(end[0] - cornerLen, start[1]);
-                            cvCtx.lineTo(end[0], start[1]);
-                            cvCtx.lineTo(end[0], start[1] + cornerLen);
-                            cvCtx.stroke();
+                            ctx.fillStyle = '#00FF00';
+                            ctx.font = 'bold 12px monospace';
+                            ctx.fillText(`FACE [${cx},${cy}]`, start[0] + 4, Math.max(16, start[1] - 8));
 
-                            cvCtx.strokeStyle = 'rgba(52, 211, 153, 0.7)';
-                            cvCtx.lineWidth = 1.5;
-                            cvCtx.beginPath();
-                            cvCtx.moveTo(centerX - 10, centerY); cvCtx.lineTo(centerX + 10, centerY);
-                            cvCtx.moveTo(centerX, centerY - 10); cvCtx.lineTo(centerX, centerY + 10);
-                            cvCtx.stroke();
-
-                            cvCtx.fillStyle = '#10B981';
-                            cvCtx.font = 'bold 12px monospace';
-                            cvCtx.fillText(`👤 FACE LOCKED | [${centerX},${centerY}]`, start[0] + 4, Math.max(16, start[1] - 8));
-
-                            if (p.trackEyes && pred.landmarks) {
-                                eyesCount += 2;
-                                [pred.landmarks[0], pred.landmarks[1]].forEach((eye, idx) => {
-                                    cvCtx.strokeStyle = '#38BDF8';
-                                    cvCtx.lineWidth = 2;
-                                    cvCtx.beginPath();
-                                    cvCtx.arc(eye[0], eye[1], 8, 0, 2 * Math.PI);
-                                    cvCtx.stroke();
-                                    cvCtx.fillStyle = '#38BDF8';
-                                    cvCtx.beginPath();
-                                    cvCtx.arc(eye[0], eye[1], 2, 0, 2 * Math.PI);
-                                    cvCtx.fill();
-                                    cvCtx.font = '9px monospace';
-                                    cvCtx.fillText(idx === 0 ? 'R_EYE' : 'L_EYE', eye[0] - 12, eye[1] - 11);
+                            if (p.eyes && pred.landmarks) {
+                                eyeCount += 2;
+                                const rEye = pred.landmarks[0];
+                                const lEye = pred.landmarks[1];
+                                [rEye, lEye].forEach((eye, idx) => {
+                                    ctx.strokeStyle = '#0096FF';
+                                    ctx.lineWidth = 2;
+                                    ctx.strokeRect(eye[0] - 12, eye[1] - 8, 24, 16);
+                                    ctx.fillStyle = '#0096FF';
+                                    ctx.font = '9px monospace';
+                                    ctx.fillText('EYE', eye[0] - 10, eye[1] - 10);
                                 });
                             }
                         });
                     }
                 } catch (e) {
-                    console.error(e);
+                    console.warn(e);
                 }
             }
 
+            // Fallback Skin Color Cluster Detection if BlazeFace still initializing
             if (!faceFound) {
-                const imgData = offscreenCtx.getImageData(0, 0, w, h);
-                const d = imgData.data;
+                const img = offscreenCtx.getImageData(0, 0, w, h);
+                const d = img.data;
                 let skinPixels = 0, sumX = 0, sumY = 0;
                 let minX = w, minY = h, maxX = 0, maxY = 0;
 
                 for (let y = 40; y < h - 40; y += 4) {
                     for (let x = 40; x < w - 40; x += 4) {
                         const idx = (y * w + x) * 4;
-                        const r = d[idx], g = d[idx + 1], b = d[idx + 2];
+                        const r = d[idx], g = d[idx+1], b = d[idx+2];
                         if (r > 95 && g > 40 && b > 20 && (r - g) > 15 && r > b) {
-                            skinPixels++;
-                            sumX += x; sumY += y;
+                            skinPixels++; sumX += x; sumY += y;
                             if (x < minX) minX = x; if (x > maxX) maxX = x;
                             if (y < minY) minY = y; if (y > maxY) maxY = y;
                         }
@@ -1036,93 +1503,138 @@
                 if (skinPixels > 250 && (maxX - minX) > 80 && (maxY - minY) > 80) {
                     faceFound = true;
                     facesCount = 1;
-                    const cX = Math.round(sumX / skinPixels);
-                    const cY = Math.round(sumY / skinPixels);
+                    const cx = Math.round(sumX / skinPixels);
+                    const cy = Math.round(sumY / skinPixels);
+                    primaryCenter = `[${cx}, ${cy}]`;
                     const fw = Math.min(240, Math.max(120, maxX - minX));
                     const fh = Math.min(280, Math.max(140, maxY - minY));
-                    const fx = Math.max(0, cX - fw / 2);
-                    const fy = Math.max(0, cY - fh / 2);
+                    const fx = Math.max(0, cx - fw / 2);
+                    const fy = Math.max(0, cy - fh / 2);
 
-                    cvCtx.strokeStyle = '#10B981';
-                    cvCtx.lineWidth = 2.5;
-                    cvCtx.strokeRect(fx, fy, fw, fh);
-                    cvCtx.fillStyle = '#10B981';
-                    cvCtx.font = 'bold 12px monospace';
-                    cvCtx.fillText(`👤 FACE LOCKED: [${cX},${cY}]`, fx + 5, Math.max(16, fy - 6));
+                    ctx.strokeStyle = '#00FF00';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(fx, fy, fw, fh);
+                    ctx.strokeStyle = '#FFFF00';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+                    ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+                    ctx.stroke();
 
-                    if (p.trackEyes) {
-                        eyesCount = 2;
-                        cvCtx.strokeStyle = '#38BDF8';
-                        cvCtx.strokeRect(cX - 45, cY - 20, 25, 18);
-                        cvCtx.strokeRect(cX + 20, cY - 20, 25, 18);
+                    ctx.fillStyle = '#00FF00';
+                    ctx.font = 'bold 12px monospace';
+                    ctx.fillText(`FACE [${cx},${cy}]`, fx + 5, Math.max(16, fy - 6));
+
+                    if (p.eyes) {
+                        eyeCount = 2;
+                        ctx.strokeStyle = '#0096FF';
+                        ctx.strokeRect(cx - 45, cy - 20, 25, 18);
+                        ctx.strokeRect(cx + 20, cy - 20, 25, 18);
                     }
                 }
             }
 
             if (faceFound) {
                 telemetryStatus.innerText = '🟢 FACE LOCKED';
-                telemetryStatus.className = 'font-bold text-emerald-400 text-[11px] animate-pulse';
-                telemetryMetric1.innerText = facesCount;
-                telemetryMetric2.innerText = eyesCount;
+                telemetryStatus.className = 'font-bold text-emerald-400 animate-pulse';
+                telemetryFaceCount.innerText = facesCount;
+                telemetryEyeCount.innerText = eyeCount;
+                telemetryCenter.innerText = primaryCenter;
             } else {
-                telemetryStatus.innerText = '🟡 SEARCHING';
-                telemetryStatus.className = 'font-bold text-amber-400 text-[11px]';
-                telemetryMetric1.innerText = '0';
-                telemetryMetric2.innerText = '0';
+                telemetryStatus.innerText = '🟡 SEARCHING FACE';
+                telemetryStatus.className = 'font-bold text-amber-400';
+                telemetryFaceCount.innerText = '0';
+                telemetryEyeCount.innerText = '0';
+                telemetryCenter.innerText = 'N/A';
             }
         }
 
-        function processContourAnalysis(imgData, w, h, p) {
-            const data = imgData.data;
-            cvCtx.drawImage(offscreenCanvas, 0, 0, w, h);
-            const minArea = p.minArea || 800;
-            cvCtx.strokeStyle = '#38BDF8';
-            cvCtx.lineWidth = 2;
-            cvCtx.fillStyle = '#38BDF8';
-            cvCtx.font = '10px monospace';
+        // =========================================================================
+        // SNAPSHOT MODE & MULTI-FILTER GALLERY (Matching app.py Mode A)
+        // =========================================================================
+        takeSnapshotBtn.addEventListener('click', async () => {
+            snapshotStatus.innerText = 'Processing snapshot through 6 core algorithms...';
+            const w = 640, h = 480;
+            const isMirrored = mirrorToggle.checked;
 
-            let minX = w, minY = h, maxX = 0, maxY = 0, pixels = 0;
-            for (let y = 20; y < h - 20; y += 4) {
-                for (let x = 20; x < w - 20; x += 4) {
-                    const idx = (y * w + x) * 4;
-                    const luma = 0.299 * data[idx] + 0.587 * data[idx + 1] + 0.114 * data[idx + 2];
-                    if (luma > 100 && luma < 210) {
-                        pixels++;
-                        if (x < minX) minX = x; if (x > maxX) maxX = x;
-                        if (y < minY) minY = y; if (y > maxY) maxY = y;
-                    }
-                }
+            offscreenCtx.save();
+            if (isMirrored) {
+                offscreenCtx.translate(w, 0);
+                offscreenCtx.scale(-1, 1);
             }
-
-            if (pixels > minArea && maxX > minX) {
-                const cX = Math.round((minX + maxX) / 2);
-                const cY = Math.round((minY + maxY) / 2);
-                if (p.drawBounding) {
-                    cvCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-                    cvCtx.fillText(`CONTOUR: Area=${pixels * 16}px`, minX + 5, minY - 6);
-                }
-                cvCtx.fillStyle = '#F59E0B';
-                cvCtx.beginPath();
-                cvCtx.arc(cX, cY, 5, 0, 2 * Math.PI);
-                cvCtx.fill();
-                cvCtx.fillText(`Centroid: [${cX},${cY}]`, cX + 8, cY + 4);
-                telemetryStatus.innerText = 'CONTOURS OK';
-                telemetryStatus.className = 'font-bold text-sky-400 text-[11px]';
-                telemetryMetric1.innerText = '1';
-                telemetryMetric2.innerText = `${pixels * 16}px`;
+            if (webcamVideo.readyState >= 2) {
+                offscreenCtx.drawImage(webcamVideo, 0, 0, w, h);
             } else {
-                telemetryStatus.innerText = 'NO CONTOURS';
-                telemetryStatus.className = 'font-bold text-amber-400 text-[11px]';
-                telemetryMetric1.innerText = '0';
-                telemetryMetric2.innerText = '0px';
+                renderSyntheticFrame(synthCtx, 1.5, w, h);
+                offscreenCtx.drawImage(syntheticCanvas, 0, 0, w, h);
             }
+            offscreenCtx.restore();
+
+            lastSnapshotData = offscreenCtx.getImageData(0, 0, w, h);
+            snapshotRawImg.src = offscreenCanvas.toDataURL();
+            snapshotDualView.classList.remove('hidden');
+            multiFilterGallery.classList.remove('hidden');
+
+            renderSnapshotProcessing();
+            renderMultiFilterGallery();
+            snapshotStatus.innerText = 'Snapshot captured and 6-filter comparative gallery rendered.';
+        });
+
+        async function renderSnapshotProcessing() {
+            if (!lastSnapshotData) return;
+            const w = 640, h = 480;
+            const copyImg = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
+            snapshotProcessedTitle.innerText = `⚡ Processed Output: ${moduleNames[activeModule]}`;
+            await executePipeline(copyImg, snapshotProcCtx, offscreenCanvas, activeModule, params[activeModule], w, h);
+
+            snapshotTelemetry.innerHTML = `
+                <span class="text-sky-400 font-bold">⚡ ${moduleNames[activeModule]}</span>
+                <span>🔬 <b>Active Processing Lock</b></span>
+            `;
         }
 
+        async function renderMultiFilterGallery() {
+            if (!lastSnapshotData) return;
+            const w = 640, h = 480;
+
+            // 1. Face & Eye Localization
+            const c1 = document.getElementById('galCanvas1').getContext('2d');
+            c1.drawImage(offscreenCanvas, 0, 0, w, h);
+            await processFaceLocalization(c1, offscreenCanvas, { scale: 1.15, neighbors: 5, eyes: true }, w, h);
+
+            // 2. Bilateral Skin Smoothing
+            const c2 = document.getElementById('galCanvas2').getContext('2d');
+            const img2 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
+            executePipeline(img2, c2, offscreenCanvas, 2, { filter: 'bilateral', ksize: 9 }, w, h);
+
+            // 3. CLAHE Equalization
+            const c3 = document.getElementById('galCanvas3').getContext('2d');
+            const img3 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
+            executePipeline(img3, c3, offscreenCanvas, 6, { method: 'clahe' }, w, h);
+
+            // 4. Canny Edge Detection
+            const c4 = document.getElementById('galCanvas4').getContext('2d');
+            const img4 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
+            executePipeline(img4, c4, offscreenCanvas, 3, { operator: 'canny', low: 50, high: 150, invert: false }, w, h);
+
+            // 5. Otsu's Bimodal Thresholding
+            const c5 = document.getElementById('galCanvas5').getContext('2d');
+            const img5 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
+            executePipeline(img5, c5, offscreenCanvas, 4, { type: 'otsu', blur: true }, w, h);
+
+            // 6. Grayscale Conversion
+            const c6 = document.getElementById('galCanvas6').getContext('2d');
+            const img6 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
+            executePipeline(img6, c6, offscreenCanvas, 1, { color_space: 'Grayscale', channel_view: 'All / Merged' }, w, h);
+        }
+
+        // Init on DOM load
         window.addEventListener('DOMContentLoaded', () => {
             renderParameters();
             renderTheory();
-            resetTelemetryLabels();
             loadBlazeFace();
+            startLiveStream();
+            requestAnimationFrame(mainLoop);
         });
     </script>
 </body>
