@@ -1,148 +1,347 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GuardVision Lab | Digital Image Processing & Computer Vision</title>
+    <title>GuardVision Lab | DIP & CV Presentation Platform</title>
+    <!-- Streamlit Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- TensorFlow.js & BlazeFace for in-browser real-time Face & Feature Localization -->
+    <!-- TensorFlow.js & BlazeFace for face tracking -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.17.0/dist/tf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.min.js"></script>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#090D16',
-                        sidebarBg: '#0B1120',
-                        cardBg: '#0F172A',
-                        borderCol: '#1E293B',
-                        accentBlue: '#38BDF8',
+                        stMainBg: '#0E1117',
+                        stSidebarBg: '#262730',
+                        stCardBg: '#0F172A',
+                        stBorder: '#31333F',
+                        stRed: '#FF4B4B',
+                        stText: '#FAFAFA',
+                        stSecondary: '#808495'
+                    },
+                    fontFamily: {
+                        sans: ['"Source Sans Pro"', 'sans-serif'],
+                        mono: ['"Source Code Pro"', 'monospace']
                     }
                 }
             }
         }
     </script>
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #090D16; }
-        ::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #334155; }
-        
-        .badge { background: #1E293B; color: #38BDF8; font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #334155; }
-        .badge-green { background: #064E3B; color: #34D399; font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #059669; }
-        .badge-amber { background: #78350F; color: #FBBF24; font-family: ui-monospace, monospace; font-size: 0.72rem; padding: 2px 7px; border-radius: 4px; border: 1px solid #D97706; }
-        
-        canvas, video { border-radius: 8px; border: 1px solid #1E293B; background: #020617; }
-        
-        input[type=range] { accent-color: #38BDF8; }
-        select, input[type=text], input[type=number] {
-            background-color: #0F172A;
-            border: 1px solid #334155;
-            color: #F8FAFC;
+        body {
+            background-color: #0E1117;
+            color: #FAFAFA;
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
         }
-        select:focus, input:focus {
+
+        /* Streamlit Slider Styling */
+        .st-slider-container {
+            position: relative;
+            padding-top: 18px;
+            margin-bottom: 12px;
+        }
+        .st-slider-val {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #FF4B4B;
+            font-size: 0.82rem;
+            font-weight: 600;
+            font-family: 'Source Code Pro', monospace;
+        }
+        input[type=range].st-slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #4B5563;
+            border-radius: 2px;
             outline: none;
-            border-color: #38BDF8;
+        }
+        input[type=range].st-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #FF4B4B;
+            cursor: pointer;
+            box-shadow: 0 0 4px rgba(255, 75, 75, 0.5);
+            transition: transform 0.1s ease;
+        }
+        input[type=range].st-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        /* Streamlit Radio Buttons */
+        .st-radio-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #FAFAFA;
+            padding: 4px 0;
+            user-select: none;
+        }
+        .st-radio-dot {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            border: 2px solid #808495;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .st-radio-label:hover .st-radio-dot {
+            border-color: #FF4B4B;
+        }
+        .st-radio-label.active .st-radio-dot {
+            border-color: #FF4B4B;
+        }
+        .st-radio-label.active .st-radio-dot::after {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #FF4B4B;
+        }
+
+        /* Streamlit Toggle Switch */
+        .st-toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 38px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+        .st-toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .st-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #4B5563;
+            transition: .2s;
+            border-radius: 22px;
+        }
+        .st-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .2s;
+            border-radius: 50%;
+        }
+        input:checked + .st-toggle-slider {
+            background-color: #FF4B4B;
+        }
+        input:checked + .st-toggle-slider:before {
+            transform: translateX(16px);
+        }
+
+        /* Streamlit Checkbox */
+        .st-checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: #FAFAFA;
+            user-select: none;
+        }
+        .st-checkbox-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            border: 2px solid #808495;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.15s ease;
+        }
+        .st-checkbox-label:hover .st-checkbox-box {
+            border-color: #FF4B4B;
+        }
+        .st-checkbox-label.checked .st-checkbox-box {
+            background-color: #FF4B4B;
+            border-color: #FF4B4B;
+        }
+        .st-checkbox-label.checked .st-checkbox-box::after {
+            content: '✓';
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        /* Streamlit Selectbox */
+        .st-select {
+            background-color: #0E1117;
+            border: 1px solid #31333F;
+            border-radius: 6px;
+            color: #FAFAFA;
+            padding: 8px 12px;
+            font-size: 0.88rem;
+            width: 100%;
+            cursor: pointer;
+            outline: none;
+        }
+        .st-select:focus {
+            border-color: #FF4B4B;
+            box-shadow: 0 0 0 1px #FF4B4B;
+        }
+
+        /* Telemetry Cards */
+        .st-telemetry-pill {
+            background-color: #0F172A;
+            border: 1px solid #1E293B;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            font-family: 'Source Sans Pro', sans-serif;
+        }
+
+        video, canvas {
+            border-radius: 8px;
+            background: #020617;
+        }
+
+        /* Streamlit Header Toolbar */
+        .st-toolbar-btn {
+            font-size: 0.82rem;
+            color: #A3A8B8;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.15s;
+        }
+        .st-toolbar-btn:hover {
+            background-color: #31333F;
+            color: #FAFAFA;
         }
     </style>
 </head>
-<body class="bg-darkBg text-slate-100 min-h-screen font-sans antialiased flex flex-col">
+<body class="min-h-screen flex flex-col">
 
-    <!-- Top Navigation Header -->
-    <header class="border-b border-borderCol bg-sidebarBg/90 backdrop-blur sticky top-0 z-50 px-5 py-2.5 flex justify-between items-center shadow-md">
+    <!-- Top Streamlit Navigation Toolbar (Matches localhost:8501) -->
+    <header class="h-12 border-b border-stBorder bg-stMainBg flex justify-between items-center px-4 z-40">
+        <!-- Left: Workbench / App info -->
         <div class="flex items-center space-x-3">
-            <span class="text-2xl">👁️</span>
-            <div>
-                <div class="flex items-center space-x-2">
-                    <h1 class="text-base font-bold text-white tracking-tight">GuardVision Lab: Side-by-Side DIP & CV Studio</h1>
-                    <span class="badge">Live Production</span>
-                </div>
-                <p class="text-[11px] text-slate-400">Live Laptop Webcam Signal Processing Workbench</p>
-            </div>
+            <span class="text-sm font-semibold text-slate-300">GuardVision AI</span>
+            <span class="text-xs bg-slate-800 border border-slate-700 text-sky-400 px-2 py-0.5 rounded font-mono">Streamlit Core 1.32</span>
         </div>
-        <div class="flex items-center space-x-2.5">
-            <span class="badge hidden sm:inline-block">OpenCV 4.14</span>
-            <span class="badge hidden sm:inline-block">30 FPS Live Stream</span>
-            <span class="badge hidden sm:inline-block">Side-by-Side View</span>
-            <a href="https://github.com/Haus-Nous/guardvision-ai" target="_blank" class="bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold px-3 py-1.5 rounded text-xs transition flex items-center space-x-1.5">
-                <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-                <span>GitHub Repo</span>
+
+        <!-- Right: Streamlit Action Buttons (Deploy, Stop, Menu) -->
+        <div class="flex items-center space-x-2">
+            <button class="st-toolbar-btn flex items-center space-x-1">
+                <span>🏃</span>
+                <span>Stop</span>
+            </button>
+            <a href="https://github.com/Haus-Nous/guardvision-ai" target="_blank" class="bg-stRed hover:bg-red-600 text-white font-medium text-xs px-3 py-1.5 rounded transition shadow-sm flex items-center space-x-1">
+                <span>Deploy</span>
             </a>
+            <button class="st-toolbar-btn font-bold text-base px-2">⋮</button>
         </div>
     </header>
 
-    <!-- Main Workspace: Sidebar + Central Content Area -->
-    <div class="flex-1 flex flex-col md:flex-row overflow-x-hidden">
+    <!-- Main Workspace: Sidebar + Central Streamlit Canvas -->
+    <div class="flex-1 flex flex-col md:flex-row">
 
         <!-- ==================================================================== -->
-        <!-- LEFT SIDEBAR: CAMERA CONTROLS + 9 MODULES + PARAMETER TUNING        -->
+        <!-- STREAMLIT SIDEBAR (Matches localhost:8501 exactly)                  -->
         <!-- ==================================================================== -->
-        <aside class="w-full md:w-80 lg:w-84 bg-sidebarBg border-r border-borderCol p-4 flex-shrink-0 flex flex-col space-y-4">
-            
-            <!-- Camera & Ingestion Section -->
-            <div class="bg-cardBg border border-borderCol rounded-lg p-3.5">
-                <h2 class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2.5 flex items-center space-x-1.5">
+        <aside class="w-full md:w-80 bg-stSidebarBg border-r border-stBorder p-5 flex-shrink-0 flex flex-col space-y-6">
+
+            <!-- 1. Camera & Stream Controls -->
+            <div>
+                <h2 class="text-base font-bold text-white mb-3 flex items-center space-x-2">
                     <span>🎛️</span>
                     <span>Camera & Stream Controls</span>
                 </h2>
-                
+
                 <div class="space-y-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300 mb-1.5">Camera Ingestion Mode</label>
-                        <div class="space-y-1.5 text-xs text-slate-300" id="ingestionRadios">
-                            <label class="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-slate-800">
-                                <input type="radio" name="cam_mode" value="stream" checked class="text-sky-500 focus:ring-0">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Camera Ingestion Mode</div>
+                        <div class="space-y-1" id="ingestionRadios">
+                            <div class="st-radio-label active" data-mode="stream">
+                                <div class="st-radio-dot"></div>
                                 <span>🎥 Live Laptop Webcam (Continuous Stream)</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-slate-800">
-                                <input type="radio" name="cam_mode" value="snapshot" class="text-sky-500 focus:ring-0">
-                                <span>📸 Browser Camera Snapshot (Multi-Filter)</span>
-                            </label>
-                            <label class="flex items-center space-x-2 cursor-pointer p-1 rounded hover:bg-slate-800">
-                                <input type="radio" name="cam_mode" value="synthetic" class="text-sky-500 focus:ring-0">
-                                <span>🧪 Synthetic Demo Generator (Offline)</span>
-                            </label>
+                            </div>
+                            <div class="st-radio-label" data-mode="snapshot">
+                                <div class="st-radio-dot"></div>
+                                <span>📸 Browser Camera Snapshot (Direct Face Preview & Multi-Filter)</span>
+                            </div>
+                            <div class="st-radio-label" data-mode="synthetic">
+                                <div class="st-radio-dot"></div>
+                                <span>🧪 Synthetic Demo Generator (Offline Fallback)</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="pt-2 border-t border-borderCol/60 space-y-2">
-                        <div class="flex items-center justify-between text-xs">
-                            <label class="text-slate-300 flex items-center space-x-2">
-                                <input type="checkbox" id="streamActiveToggle" checked class="rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-0">
-                                <span>▶️ Activate Video Feed</span>
-                            </label>
-                            <span id="camStatusBadge" class="badge-amber">Camera Idle</span>
-                        </div>
+                    <!-- Activate Video Feed Toggle -->
+                    <div class="flex items-center space-x-3 pt-1">
+                        <label class="st-toggle-switch">
+                            <input type="checkbox" id="streamToggle" checked>
+                            <span class="st-toggle-slider"></span>
+                        </label>
+                        <span class="text-xs text-stText font-medium">▶️ Activate Video Feed</span>
+                    </div>
 
-                        <div class="flex items-center justify-between text-xs text-slate-300">
-                            <label for="mirrorToggle" class="cursor-pointer flex items-center space-x-2">
-                                <input type="checkbox" id="mirrorToggle" checked class="rounded border-slate-700 bg-slate-900 text-sky-500 focus:ring-0">
-                                <span>🪞 Mirror Webcam Horizontally</span>
-                            </label>
-                        </div>
+                    <!-- Mirror Webcam Checkbox -->
+                    <div class="st-checkbox-label checked" id="mirrorCheckboxWrapper">
+                        <div class="st-checkbox-box"></div>
+                        <span class="text-xs text-stText font-medium">🪞 Mirror Webcam Horizontally</span>
+                    </div>
 
-                        <div class="pt-1">
-                            <label class="block text-[11px] font-medium text-slate-400 mb-1">Display Layout</label>
-                            <select id="layoutSelect" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded p-1.5 focus:outline-none">
-                                <option value="side">Side-by-Side (Original vs Processed)</option>
-                                <option value="processed">Processed Only</option>
-                            </select>
+                    <!-- Display Layout Radio -->
+                    <div class="pt-1">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Display Layout</div>
+                        <div class="space-y-1" id="layoutRadios">
+                            <div class="st-radio-label active" data-layout="side">
+                                <div class="st-radio-dot"></div>
+                                <span>Side-by-Side (Original vs Processed)</span>
+                            </div>
+                            <div class="st-radio-label" data-layout="processed">
+                                <div class="st-radio-dot"></div>
+                                <span>Processed Only</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Laboratory Modules Section -->
-            <div class="bg-cardBg border border-borderCol rounded-lg p-3.5">
-                <h2 class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
+            <hr class="border-stBorder">
+
+            <!-- 2. Laboratory Modules -->
+            <div>
+                <h2 class="text-base font-bold text-white mb-2 flex items-center space-x-2">
                     <span>🔬</span>
                     <span>Laboratory Modules</span>
                 </h2>
-                <label for="moduleSelect" class="block text-[11px] text-slate-400 mb-1.5">Select DIP / CV Technique:</label>
-                <select id="moduleSelect" class="w-full bg-slate-900 border border-slate-700 text-sky-400 font-medium text-xs rounded p-2 focus:outline-none">
+                <div class="text-xs text-stSecondary mb-1.5 font-medium">Select DIP / CV Technique</div>
+                <select id="moduleSelect" class="st-select">
                     <option value="1">1. Color Space Transformations</option>
                     <option value="2">2. Spatial Filtering & Noise Reduction</option>
                     <option value="3">3. Edge Detection & Gradients</option>
@@ -155,225 +354,189 @@
                 </select>
             </div>
 
-            <!-- Dynamic Parameter Tuning Section -->
-            <div class="bg-cardBg border border-borderCol rounded-lg p-3.5 flex-1">
-                <h2 class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-2 flex items-center space-x-1.5">
-                    <span>⚙️</span>
-                    <span>Parameter Tuning</span>
-                </h2>
-                <div id="parameterControls" class="space-y-3.5 text-xs">
-                    <!-- Populated dynamically via JS based on selected module -->
+            <!-- 3. Parameter Tuning (Dynamic sliders matching Streamlit) -->
+            <div class="flex-1">
+                <h3 class="text-sm font-bold text-white mb-3">Parameter Tuning</h3>
+                <div id="parameterControls" class="space-y-4">
+                    <!-- Populated dynamically via JS -->
                 </div>
             </div>
 
         </aside>
 
         <!-- ==================================================================== -->
-        <!-- MAIN WORKSPACE: MODE VIEWS + TELEMETRY + MULTI-FILTER GALLERY        -->
+        <!-- STREAMLIT MAIN STAGE (Matches localhost:8501 viewports)             -->
         <!-- ==================================================================== -->
-        <main class="flex-1 p-4 lg:p-6 overflow-y-auto space-y-6">
+        <main class="flex-1 p-6 lg:p-8 overflow-y-auto space-y-6">
 
-            <!-- MODE A: BROWSER CAMERA SNAPSHOT & MULTI-FILTER SECTION -->
-            <section id="snapshotModeSection" class="hidden bg-cardBg border border-borderCol rounded-xl p-5 shadow-lg space-y-4">
-                <div class="border-b border-borderCol pb-3">
-                    <h2 class="text-base font-bold text-white flex items-center gap-2">
-                        <span>📸</span>
-                        <span>Live Browser Camera Snapshot & Multi-Filter Inspection</span>
-                    </h2>
-                    <p class="text-xs text-slate-400 mt-1">Look into your laptop camera and press <strong>"Take Photo"</strong> below to immediately test and compare DIP & Computer Vision algorithms on your own face!</p>
+            <!-- Streamlit Title & Top Subtitle -->
+            <div class="flex justify-between items-start pb-2 border-b border-stBorder/60">
+                <div>
+                    <h1 class="text-2xl font-bold text-white tracking-tight">👁️ GuardVision Lab: Side-by-Side DIP & CV Studio</h1>
+                    <p class="text-sm text-stSecondary mt-0.5">Live Laptop Webcam Signal Processing Workbench</p>
                 </div>
+                <div class="flex space-x-2">
+                    <span class="text-xs bg-slate-800 border border-slate-700 text-sky-400 px-2 py-0.5 rounded font-mono">OpenCV 4.14</span>
+                    <span class="text-xs bg-slate-800 border border-slate-700 text-purple-400 px-2 py-0.5 rounded font-mono">30 FPS Live Stream</span>
+                </div>
+            </div>
 
-                <div class="flex flex-wrap items-center gap-3">
-                    <button id="takeSnapshotBtn" class="bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold px-4 py-2 rounded text-xs transition flex items-center space-x-2">
+            <!-- MODE A: CONTINUOUS STREAM (DEFAULT / MATCHING SCREENSHOT) -->
+            <section id="streamViewSection" class="space-y-6">
+                <!-- Dual Side-by-Side Video Columns -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="videoGrid">
+
+                    <!-- Left: Raw Video Ingestion -->
+                    <div id="colLeft" class="flex flex-col">
+                        <div class="text-sm font-semibold text-slate-200 mb-2 flex items-center space-x-2">
+                            <span>📹</span>
+                            <span>Live Camera Feed (Your Raw Image)</span>
+                        </div>
+                        <div class="relative aspect-[4/3] w-full bg-black rounded-lg overflow-hidden border border-stBorder">
+                            <video id="rawVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
+                            <canvas id="synthCanvas" width="640" height="480" class="hidden w-full h-full object-cover"></canvas>
+                        </div>
+                        <!-- Left Telemetry Pill (Exact text from localhost:8501) -->
+                        <div class="st-telemetry-pill">
+                            <span class="text-slate-400" id="leftBadgeText">🟢 <b>Live Ingestion</b> (FaceTime HD Device 0)</span>
+                            <span class="text-slate-400">📐 <b>640x480</b></span>
+                            <span class="text-slate-400" id="leftMirrorText">🪞 <b>Mirrored View</b></span>
+                        </div>
+                    </div>
+
+                    <!-- Right: Processed Vision Output -->
+                    <div id="colRight" class="flex flex-col">
+                        <div class="text-sm font-semibold text-slate-200 mb-2 flex items-center space-x-2">
+                            <span class="text-amber-400">⚡</span>
+                            <span id="rightHeaderTitle">Live Processed Vision: Face & Feature Localization (CV)</span>
+                        </div>
+                        <div class="relative aspect-[4/3] w-full bg-black rounded-lg overflow-hidden border border-stBorder">
+                            <canvas id="procCanvas" width="640" height="480" class="w-full h-full object-cover"></canvas>
+                        </div>
+                        <!-- Right Telemetry Pill (Exact text from localhost:8501) -->
+                        <div class="st-telemetry-pill text-slate-200 font-mono" id="rightTelemetryPill">
+                            <!-- Injected dynamically based on active module -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- MODE B: BROWSER CAMERA SNAPSHOT & MULTI-FILTER GALLERY -->
+            <section id="snapshotViewSection" class="hidden space-y-6">
+                <div class="bg-stSidebarBg border border-stBorder rounded-xl p-6">
+                    <h3 class="text-lg font-bold text-white mb-2">📸 Live Browser Camera Snapshot & Multi-Filter Inspection</h3>
+                    <p class="text-sm text-stSecondary mb-4">Your browser will prompt for camera access. Look into the camera and click <strong>"Take Photo"</strong> below to immediately test and compare DIP & Computer Vision algorithms on your own face!</p>
+
+                    <button id="snapshotBtn" class="bg-stRed hover:bg-red-600 text-white font-semibold text-sm px-5 py-2.5 rounded transition shadow flex items-center space-x-2">
                         <span>📷</span>
-                        <span>Take Photo / Capture Snapshot</span>
+                        <span>Take a photo of your face</span>
                     </button>
-                    <span id="snapshotStatus" class="text-xs text-slate-400">Camera preview active. Click to capture facial frame.</span>
                 </div>
 
                 <!-- Snapshot Dual Display -->
-                <div id="snapshotDualView" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                <div id="snapshotDual" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <div class="text-xs font-semibold text-slate-300 mb-1.5">📹 Original Snapshot (Your Face)</div>
-                        <img id="snapshotRawImg" class="w-full aspect-[4/3] object-cover rounded-lg border border-borderCol bg-slate-950">
-                        <div class="mt-2 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-400 flex justify-between font-mono">
-                            <span>🟢 <b>Raw Ingestion Photo</b></span>
-                            <span>📐 <b>640x480</b></span>
+                        <div class="text-sm font-semibold text-slate-200 mb-2">📹 Original Snapshot (Your Face)</div>
+                        <img id="snapRawImg" class="w-full aspect-[4/3] object-cover rounded-lg border border-stBorder bg-black">
+                        <div class="st-telemetry-pill">
+                            <span class="text-slate-400">🟢 <b>Raw Ingestion Photo</b></span>
+                            <span class="text-slate-400">📐 <b>640x480</b></span>
                         </div>
                     </div>
 
                     <div>
-                        <div class="text-xs font-semibold text-sky-400 mb-1.5" id="snapshotProcessedTitle">⚡ Processed Output</div>
-                        <canvas id="snapshotProcCanvas" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded-lg border border-borderCol bg-slate-950"></canvas>
-                        <div class="mt-2 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-300 flex justify-between font-mono" id="snapshotTelemetry">
-                            <!-- Telemetry -->
-                        </div>
+                        <div class="text-sm font-semibold text-sky-400 mb-2" id="snapProcTitle">⚡ Processed Output</div>
+                        <canvas id="snapProcCanvas" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded-lg border border-stBorder bg-black"></canvas>
+                        <div class="st-telemetry-pill text-slate-200 font-mono" id="snapTelemetry"></div>
                     </div>
                 </div>
 
-                <!-- Multi-Filter Gallery -->
-                <div id="multiFilterGallery" class="hidden pt-4 border-t border-borderCol">
-                    <h3 class="text-sm font-bold text-sky-400 mb-2">🔬 Multi-Filter Gallery: See 6 Core DIP & CV Algorithms Applied to Your Face Simultaneously</h3>
-                    <p class="text-xs text-slate-400 mb-4">Here is how 6 distinct mathematical computer vision transformations alter your exact facial portrait:</p>
+                <!-- 6-Filter Gallery -->
+                <div id="snapGallery" class="hidden bg-stSidebarBg border border-stBorder rounded-xl p-6 space-y-4">
+                    <h3 class="text-base font-bold text-sky-400">🔬 Multi-Filter Gallery: See 6 Core DIP & CV Algorithms Applied to Your Face Simultaneously</h3>
+                    <p class="text-xs text-stSecondary">Here is how 6 distinct mathematical computer vision transformations alter your exact facial portrait:</p>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <!-- 1. Face & Eye Localization -->
-                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                        <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">1. Face & Eye Localization</div>
-                            <canvas id="galCanvas1" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
-                            <div class="text-[11px] text-slate-400 mt-1">Viola-Jones Bounding Boxes & Crosshairs</div>
+                            <canvas id="gal1" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
+                            <div class="text-[11px] text-stSecondary mt-1">Viola-Jones Bounding Boxes & Crosshairs</div>
                         </div>
-
-                        <!-- 2. Bilateral Skin Smoothing -->
-                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                        <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">2. Bilateral Filter</div>
-                            <canvas id="galCanvas2" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
-                            <div class="text-[11px] text-slate-400 mt-1">Edge-Preserving Smoothing (Skin Smooth)</div>
+                            <canvas id="gal2" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
+                            <div class="text-[11px] text-stSecondary mt-1">Edge-Preserving Skin Smoothing</div>
                         </div>
-
-                        <!-- 3. CLAHE Equalization -->
-                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                        <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">3. CLAHE Equalization</div>
-                            <canvas id="galCanvas3" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
-                            <div class="text-[11px] text-slate-400 mt-1">Adaptive Local Contrast Enhancement</div>
+                            <canvas id="gal3" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
+                            <div class="text-[11px] text-stSecondary mt-1">Adaptive Local Contrast Enhancement</div>
                         </div>
-
-                        <!-- 4. Canny Edge Detection -->
-                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                        <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">4. Canny Edge Detection</div>
-                            <canvas id="galCanvas4" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
-                            <div class="text-[11px] text-slate-400 mt-1">Multi-Stage Hysteresis Wireframe</div>
+                            <canvas id="gal4" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
+                            <div class="text-[11px] text-stSecondary mt-1">Multi-Stage Hysteresis Wireframe</div>
                         </div>
-
-                        <!-- 5. Otsu's Bimodal Thresholding -->
-                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                        <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">5. Otsu's Bimodal Thresholding</div>
-                            <canvas id="galCanvas5" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
-                            <div class="text-[11px] text-slate-400 mt-1">Optimal Class Variance Binary Mask</div>
+                            <canvas id="gal5" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
+                            <div class="text-[11px] text-stSecondary mt-1">Optimal Class Variance Binary Mask</div>
                         </div>
-
-                        <!-- 6. Grayscale Conversion -->
-                        <div class="bg-slate-900/90 border border-borderCol rounded-lg p-2.5">
+                        <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">6. Grayscale Conversion</div>
-                            <canvas id="galCanvas6" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-borderCol"></canvas>
-                            <div class="text-[11px] text-slate-400 mt-1">Rec. 601 Luma (0.299R + 0.587G + 0.114B)</div>
+                            <canvas id="gal6" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
+                            <div class="text-[11px] text-stSecondary mt-1">Rec. 601 Luma (0.299R + 0.587G + 0.114B)</div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- MODE B: REAL-TIME CONTINUOUS STREAM & SYNTHETIC STREAM -->
-            <section id="streamModeSection" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="streamDualGrid">
-
-                    <!-- Left Column: Raw Webcam Feed -->
-                    <div id="colLeftWrapper" class="bg-cardBg border border-borderCol rounded-xl p-3.5 shadow-lg flex flex-col">
-                        <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
-                            <span class="flex items-center space-x-1.5">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                <span id="rawStreamTitle">Live Camera Feed (Your Raw Image)</span>
-                            </span>
-                            <span class="badge font-mono" id="rawResolutionBadge">640x480</span>
-                        </div>
-
-                        <div class="relative aspect-[4/3] w-full bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border border-borderCol">
-                            <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover transform -scale-x-100"></video>
-                            <canvas id="syntheticCanvas" width="640" height="480" class="hidden w-full h-full object-cover"></canvas>
-                            <div id="leftOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-950/85 transition-opacity">
-                                <span class="text-3xl mb-2">📹</span>
-                                <span class="font-semibold text-slate-200" id="leftOverlayText">Activating Camera Stream...</span>
-                                <span class="text-[11px] text-slate-500 mt-1">Direct WebRTC hardware stream</span>
-                            </div>
-                        </div>
-
-                        <!-- Left Telemetry Matching Local App -->
-                        <div class="mt-2.5 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-400 flex justify-between font-mono">
-                            <span id="leftDeviceTag">🟢 <b>Live Ingestion</b> (FaceTime HD Device 0)</span>
-                            <span>📐 <b>640x480</b></span>
-                            <span id="leftMirrorTag">🪞 <b>Mirrored View</b></span>
-                        </div>
-                    </div>
-
-                    <!-- Right Column: Processed Stream -->
-                    <div id="colRightWrapper" class="bg-cardBg border border-borderCol rounded-xl p-3.5 shadow-lg flex flex-col">
-                        <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-2">
-                            <span class="flex items-center space-x-1.5 text-sky-400">
-                                <span>⚡</span>
-                                <span id="processedStreamTitle">Live Processed Vision: Face & Feature Localization</span>
-                            </span>
-                            <span class="badge text-emerald-400 font-mono" id="streamFpsBadge">0.0 FPS</span>
-                        </div>
-
-                        <div class="relative aspect-[4/3] w-full bg-slate-950 rounded-lg overflow-hidden flex items-center justify-center border border-borderCol">
-                            <canvas id="processedCanvas" width="640" height="480" class="w-full h-full object-cover"></canvas>
-                            <div id="rightOverlay" class="absolute inset-0 flex flex-col items-center justify-center text-slate-400 text-xs bg-slate-950/85 transition-opacity">
-                                <span class="text-3xl mb-2">🔬</span>
-                                <span class="font-semibold text-slate-200">Processed Output Active</span>
-                            </div>
-                        </div>
-
-                        <!-- Right Telemetry Card Matching Local App -->
-                        <div id="rightTelemetryCard" class="mt-2.5 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-200 flex justify-between items-center font-mono">
-                            <span id="telemetryStatus" class="font-bold text-amber-400">🟡 SEARCHING FACE</span>
-                            <span id="telemetryFaceSpan">👤 Faces: <b class="text-sky-400" id="telemetryFaceCount">0</b></span>
-                            <span id="telemetryEyeSpan">👁️ Eyes: <b class="text-sky-400" id="telemetryEyeCount">0</b></span>
-                            <span id="telemetryCenterSpan">📍 Center: <b id="telemetryCenter">N/A</b></span>
-                            <span class="text-purple-400 font-mono" id="telemetryFps">⚡ 0.0 FPS</span>
-                        </div>
-                    </div>
-
-                </div>
-            </section>
-
-            <!-- ACADEMIC MATHEMATICAL FOUNDATIONS SECTION -->
-            <section class="bg-cardBg border border-borderCol rounded-xl p-4 shadow">
-                <details id="theoryDetails" class="cursor-pointer">
-                    <summary class="text-xs font-bold text-sky-400 uppercase tracking-wider flex items-center justify-between">
-                        <span class="flex items-center space-x-1.5">
-                            <span>📘</span>
-                            <span id="theoryTitle">DIP & CV Mathematical Foundations & Algorithm Theory (Click to Expand for Professor Q&A)</span>
-                        </span>
-                        <span class="text-slate-500 text-[11px] font-normal lowercase">(click to expand)</span>
+            <!-- Expander 1: Academic Mathematical Foundations (Matches st.expander) -->
+            <div class="bg-stSidebarBg border border-stBorder rounded-lg overflow-hidden">
+                <details class="cursor-pointer group">
+                    <summary class="px-4 py-3 text-sm font-semibold text-slate-200 flex justify-between items-center select-none">
+                        <span>📘 DIP & CV Mathematical Foundations & Algorithm Theory (Click to Expand for Professor Q&A)</span>
+                        <span class="text-stSecondary group-open:rotate-180 transition-transform">▼</span>
                     </summary>
-                    <div id="theoryBody" class="mt-3 text-xs text-slate-300 leading-relaxed space-y-2 border-t border-borderCol/60 pt-3">
+                    <div id="theoryContent" class="px-5 py-4 border-t border-stBorder text-xs text-slate-300 leading-relaxed space-y-2 bg-stMainBg/50">
                         <!-- Populated dynamically -->
                     </div>
                 </details>
-            </section>
+            </div>
 
-            <!-- HOW TO DEMONSTRATE SECTION -->
-            <section class="bg-cardBg border border-borderCol rounded-xl p-4 shadow">
-                <details class="cursor-pointer">
-                    <summary class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center justify-between">
-                        <span class="flex items-center space-x-1.5">
-                            <span>💡</span>
-                            <span>How to Demonstrate Facial & Video Processing to Your Professor</span>
-                        </span>
-                        <span class="text-slate-500 text-[11px] font-normal lowercase">(click to expand)</span>
+            <!-- Expander 2: Presentation Tips -->
+            <div class="bg-stSidebarBg border border-stBorder rounded-lg overflow-hidden">
+                <details class="cursor-pointer group">
+                    <summary class="px-4 py-3 text-sm font-semibold text-emerald-400 flex justify-between items-center select-none">
+                        <span>💡 How to Demonstrate Facial & Video Processing to Your Professor</span>
+                        <span class="text-stSecondary group-open:rotate-180 transition-transform">▼</span>
                     </summary>
-                    <div class="mt-3 text-xs text-slate-300 leading-relaxed space-y-2 border-t border-borderCol/60 pt-3">
+                    <div class="px-5 py-4 border-t border-stBorder text-xs text-slate-300 leading-relaxed space-y-2 bg-stMainBg/50">
                         <p>• <strong>Face Tracking (Module 8)</strong>: As you move your head, notice the green bounding box and yellow crosshair following your facial centroid with exact coordinates.</p>
                         <p>• <strong>Eye Tracking</strong>: Notice the blue boxes over your eyes. Blink or cover an eye to show the eye counter change from 2 to 1.</p>
                         <p>• <strong>Motion Detection (Module 7)</strong>: Wave your hand in front of the camera to see the red motion bounding boxes and motion percentage meter react to temporal frame differencing.</p>
                         <p>• <strong>Edge Detection (Module 3)</strong>: Tune the lower and upper hysteresis sliders in the left sidebar to show how Canny suppresses noise while highlighting facial contours.</p>
                     </div>
                 </details>
-            </section>
+            </div>
 
         </main>
     </div>
 
-    <!-- Hidden Offscreen Canvas for Frame Processing -->
+    <!-- Hidden Offscreen Canvas for Frame Capture -->
     <canvas id="offscreenCanvas" width="640" height="480" class="hidden"></canvas>
 
     <!-- ==================================================================== -->
-    <!-- JAVASCRIPT: PROCESSING PIPELINE & MATCHED STREAMLIT LOGIC            -->
+    <!-- JAVASCRIPT: OPENCV-IDENTICAL ALGORITHMS & BOUNDING BOX GENERATION     -->
     <!-- ==================================================================== -->
     <script>
         // State
         let currentMode = 'stream'; // 'stream', 'snapshot', 'synthetic'
         let activeModule = 8;
-        let isStreaming = false;
+        let isStreaming = true;
+        let isMirrored = true;
+        let currentLayout = 'side';
         let mediaStream = null;
         let blazefaceModel = null;
         let modelLoading = false;
@@ -383,59 +546,41 @@
         let lastTime = performance.now();
         let fps = 0;
         let syntheticT = 0;
-        let lastSnapshotData = null;
+        let lastSnapshotImg = null;
 
         // Elements
-        const webcamVideo = document.getElementById('webcamVideo');
-        const processedCanvas = document.getElementById('processedCanvas');
-        const procCtx = processedCanvas.getContext('2d');
-        const syntheticCanvas = document.getElementById('syntheticCanvas');
-        const synthCtx = syntheticCanvas.getContext('2d');
+        const rawVideo = document.getElementById('rawVideo');
+        const procCanvas = document.getElementById('procCanvas');
+        const procCtx = procCanvas.getContext('2d');
+        const synthCanvas = document.getElementById('synthCanvas');
+        const synthCtx = synthCanvas.getContext('2d');
         const offscreenCanvas = document.getElementById('offscreenCanvas');
         const offscreenCtx = offscreenCanvas.getContext('2d', { willReadFrequently: true });
 
-        const streamActiveToggle = document.getElementById('streamActiveToggle');
-        const mirrorToggle = document.getElementById('mirrorToggle');
-        const layoutSelect = document.getElementById('layoutSelect');
+        const streamToggle = document.getElementById('streamToggle');
+        const mirrorCheckboxWrapper = document.getElementById('mirrorCheckboxWrapper');
         const moduleSelect = document.getElementById('moduleSelect');
         const parameterControls = document.getElementById('parameterControls');
-        const theoryTitle = document.getElementById('theoryTitle');
-        const theoryBody = document.getElementById('theoryBody');
+        const theoryContent = document.getElementById('theoryContent');
+        const rightHeaderTitle = document.getElementById('rightHeaderTitle');
+        const rightTelemetryPill = document.getElementById('rightTelemetryPill');
+        const leftBadgeText = document.getElementById('leftBadgeText');
+        const leftMirrorText = document.getElementById('leftMirrorText');
+        const colLeft = document.getElementById('colLeft');
 
-        const colLeftWrapper = document.getElementById('colLeftWrapper');
-        const colRightWrapper = document.getElementById('colRightWrapper');
-        const leftOverlay = document.getElementById('leftOverlay');
-        const rightOverlay = document.getElementById('rightOverlay');
-        const leftOverlayText = document.getElementById('leftOverlayText');
-        const leftDeviceTag = document.getElementById('leftDeviceTag');
-        const leftMirrorTag = document.getElementById('leftMirrorTag');
-        const rawStreamTitle = document.getElementById('rawStreamTitle');
-        const processedStreamTitle = document.getElementById('processedStreamTitle');
-        const streamFpsBadge = document.getElementById('streamFpsBadge');
-        const camStatusBadge = document.getElementById('camStatusBadge');
+        // Mode sections
+        const streamViewSection = document.getElementById('streamViewSection');
+        const snapshotViewSection = document.getElementById('snapshotViewSection');
+        const snapshotBtn = document.getElementById('snapshotBtn');
+        const snapshotDual = document.getElementById('snapshotDual');
+        const snapRawImg = document.getElementById('snapRawImg');
+        const snapProcCanvas = document.getElementById('snapProcCanvas');
+        const snapProcCtx = snapProcCanvas.getContext('2d');
+        const snapProcTitle = document.getElementById('snapProcTitle');
+        const snapTelemetry = document.getElementById('snapTelemetry');
+        const snapGallery = document.getElementById('snapGallery');
 
-        const telemetryStatus = document.getElementById('telemetryStatus');
-        const telemetryFaceSpan = document.getElementById('telemetryFaceSpan');
-        const telemetryFaceCount = document.getElementById('telemetryFaceCount');
-        const telemetryEyeSpan = document.getElementById('telemetryEyeSpan');
-        const telemetryEyeCount = document.getElementById('telemetryEyeCount');
-        const telemetryCenterSpan = document.getElementById('telemetryCenterSpan');
-        const telemetryCenter = document.getElementById('telemetryCenter');
-        const telemetryFps = document.getElementById('telemetryFps');
-
-        // Snapshot Elements
-        const snapshotModeSection = document.getElementById('snapshotModeSection');
-        const streamModeSection = document.getElementById('streamModeSection');
-        const takeSnapshotBtn = document.getElementById('takeSnapshotBtn');
-        const snapshotStatus = document.getElementById('snapshotStatus');
-        const snapshotDualView = document.getElementById('snapshotDualView');
-        const snapshotRawImg = document.getElementById('snapshotRawImg');
-        const snapshotProcCanvas = document.getElementById('snapshotProcCanvas');
-        const snapshotProcCtx = snapshotProcCanvas.getContext('2d');
-        const snapshotTelemetry = document.getElementById('snapshotTelemetry');
-        const multiFilterGallery = document.getElementById('multiFilterGallery');
-
-        // Module Names Map
+        // Module dictionary
         const moduleNames = {
             1: "Color Space Transformations",
             2: "Spatial Filtering & Noise Reduction",
@@ -448,7 +593,7 @@
             9: "Contour & Geometric Shape Analysis (CV)"
         };
 
-        // Complete Parameters Mirroring app.py
+        // Complete Parameters
         const params = {
             1: { color_space: 'Grayscale', channel_view: 'All / Merged' },
             2: { filter: 'gaussian', ksize: 11, sigma: 2.0, d: 9, sigma_color: 75, sigma_space: 75, strength: 1.5 },
@@ -461,7 +606,7 @@
             9: { min_area: 800, bounding: true, hull: false }
         };
 
-        // Render Parameters Exactly Like Streamlit Sidebar
+        // Dynamic Parameter Sliders Matching Streamlit Layout & Red Accents
         function renderParameters() {
             parameterControls.innerHTML = '';
             const m = activeModule;
@@ -469,8 +614,8 @@
             if (m === 1) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Target Color Space</label>
-                        <select id="p_cs" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Target Color Space</div>
+                        <select id="p_cs" class="st-select">
                             <option value="Grayscale" ${params[1].color_space === 'Grayscale' ? 'selected':''}>Grayscale</option>
                             <option value="HSV" ${params[1].color_space === 'HSV' ? 'selected':''}>HSV</option>
                             <option value="CIELAB" ${params[1].color_space === 'CIELAB' ? 'selected':''}>CIELAB</option>
@@ -478,8 +623,8 @@
                         </select>
                     </div>
                     <div id="channelGroup" class="${params[1].color_space === 'Grayscale' ? 'hidden':''}">
-                        <label class="block text-slate-300 mb-1">Channel Split View</label>
-                        <select id="p_cv" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Channel Split View</div>
+                        <select id="p_cv" class="st-select">
                             <option value="All / Merged">All / Merged</option>
                             <option value="Channel 1">Channel 1</option>
                             <option value="Channel 2">Channel 2</option>
@@ -490,134 +635,141 @@
                 document.getElementById('p_cs').onchange = (e) => {
                     params[1].color_space = e.target.value;
                     document.getElementById('channelGroup').classList.toggle('hidden', e.target.value === 'Grayscale');
-                    triggerReprocess();
                 };
-                document.getElementById('p_cv').onchange = (e) => {
-                    params[1].channel_view = e.target.value;
-                    triggerReprocess();
-                };
+                document.getElementById('p_cv').onchange = (e) => { params[1].channel_view = e.target.value; };
             }
             else if (m === 2) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Filter Type</label>
-                        <select id="p_ft" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Filter Type</div>
+                        <select id="p_ft" class="st-select">
                             <option value="gaussian">Gaussian Blur</option>
                             <option value="median">Median Blur</option>
                             <option value="bilateral">Bilateral Filter (Edge-Preserving)</option>
                             <option value="sharpen">Sharpening Kernel</option>
                         </select>
                     </div>
-                    <div id="filterParams" class="space-y-3 pt-1"></div>
+                    <div id="subFilter"></div>
                 `;
-                const ftSelect = document.getElementById('p_ft');
-                ftSelect.value = params[2].filter;
-                function updateFilterControls() {
-                    const fp = document.getElementById('filterParams');
-                    const cur = ftSelect.value;
+                const ft = document.getElementById('p_ft');
+                ft.value = params[2].filter;
+                function updateSubFilter() {
+                    const sf = document.getElementById('subFilter');
+                    const cur = ft.value;
                     params[2].filter = cur;
                     if (cur === 'gaussian') {
-                        fp.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Kernel Size (Odd NxN)</span><span class="text-sky-400 font-mono">${params[2].ksize}</span></div>
-                                <input type="range" id="p_ksize" min="3" max="35" step="2" value="${params[2].ksize}" class="w-full">
+                        sf.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Kernel Size (Odd NxN)</div>
+                                <div class="st-slider-val" id="ksizeVal">${params[2].ksize}</div>
+                                <input type="range" id="p_ksize" min="3" max="35" step="2" value="${params[2].ksize}" class="st-slider">
                             </div>
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Sigma</span><span class="text-sky-400 font-mono">${params[2].sigma}</span></div>
-                                <input type="range" id="p_sigma" min="0.1" max="10.0" step="0.1" value="${params[2].sigma}" class="w-full">
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Sigma (Standard Deviation)</div>
+                                <div class="st-slider-val" id="sigmaVal">${params[2].sigma}</div>
+                                <input type="range" id="p_sigma" min="0.1" max="10.0" step="0.1" value="${params[2].sigma}" class="st-slider">
                             </div>
                         `;
-                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); updateFilterControls(); };
-                        document.getElementById('p_sigma').oninput = (e) => { params[2].sigma = parseFloat(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); document.getElementById('ksizeVal').innerText = e.target.value; };
+                        document.getElementById('p_sigma').oninput = (e) => { params[2].sigma = parseFloat(e.target.value); document.getElementById('sigmaVal').innerText = e.target.value; };
                     } else if (cur === 'median') {
-                        fp.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Kernel Size (Odd)</span><span class="text-sky-400 font-mono">${params[2].ksize}</span></div>
-                                <input type="range" id="p_ksize" min="3" max="31" step="2" value="${params[2].ksize}" class="w-full">
+                        sf.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Kernel Size (Odd)</div>
+                                <div class="st-slider-val" id="ksizeVal">${params[2].ksize}</div>
+                                <input type="range" id="p_ksize" min="3" max="31" step="2" value="${params[2].ksize}" class="st-slider">
                             </div>
                         `;
-                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); document.getElementById('ksizeVal').innerText = e.target.value; };
                     } else if (cur === 'bilateral') {
-                        fp.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Diameter</span><span class="text-sky-400 font-mono">${params[2].d}</span></div>
-                                <input type="range" id="p_d" min="3" max="25" step="2" value="${params[2].d}" class="w-full">
+                        sf.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Diameter of Neighborhood</div>
+                                <div class="st-slider-val" id="dVal">${params[2].d}</div>
+                                <input type="range" id="p_d" min="3" max="25" step="2" value="${params[2].d}" class="st-slider">
                             </div>
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Sigma Color</span><span class="text-sky-400 font-mono">${params[2].sigma_color}</span></div>
-                                <input type="range" id="p_sc" min="10" max="200" step="5" value="${params[2].sigma_color}" class="w-full">
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Sigma Color</div>
+                                <div class="st-slider-val" id="scVal">${params[2].sigma_color}</div>
+                                <input type="range" id="p_sc" min="10" max="200" step="5" value="${params[2].sigma_color}" class="st-slider">
                             </div>
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Sigma Space</span><span class="text-sky-400 font-mono">${params[2].sigma_space}</span></div>
-                                <input type="range" id="p_ss" min="10" max="200" step="5" value="${params[2].sigma_space}" class="w-full">
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Sigma Space</div>
+                                <div class="st-slider-val" id="ssVal">${params[2].sigma_space}</div>
+                                <input type="range" id="p_ss" min="10" max="200" step="5" value="${params[2].sigma_space}" class="st-slider">
                             </div>
                         `;
-                        document.getElementById('p_d').oninput = (e) => { params[2].d = parseInt(e.target.value); updateFilterControls(); };
-                        document.getElementById('p_sc').oninput = (e) => { params[2].sigma_color = parseInt(e.target.value); updateFilterControls(); };
-                        document.getElementById('p_ss').oninput = (e) => { params[2].sigma_space = parseInt(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_d').oninput = (e) => { params[2].d = parseInt(e.target.value); document.getElementById('dVal').innerText = e.target.value; };
+                        document.getElementById('p_sc').oninput = (e) => { params[2].sigma_color = parseInt(e.target.value); document.getElementById('scVal').innerText = e.target.value; };
+                        document.getElementById('p_ss').oninput = (e) => { params[2].sigma_space = parseInt(e.target.value); document.getElementById('ssVal').innerText = e.target.value; };
                     } else {
-                        fp.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Sharpen Strength</span><span class="text-sky-400 font-mono">${params[2].strength}</span></div>
-                                <input type="range" id="p_str" min="1.0" max="4.0" step="0.1" value="${params[2].strength}" class="w-full">
+                        sf.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Sharpen Strength</div>
+                                <div class="st-slider-val" id="strVal">${params[2].strength}</div>
+                                <input type="range" id="p_str" min="1.0" max="4.0" step="0.1" value="${params[2].strength}" class="st-slider">
                             </div>
                         `;
-                        document.getElementById('p_str').oninput = (e) => { params[2].strength = parseFloat(e.target.value); updateFilterControls(); };
+                        document.getElementById('p_str').oninput = (e) => { params[2].strength = parseFloat(e.target.value); document.getElementById('strVal').innerText = e.target.value; };
                     }
-                    triggerReprocess();
                 }
-                ftSelect.onchange = updateFilterControls;
-                updateFilterControls();
+                ft.onchange = updateSubFilter;
+                updateSubFilter();
             }
             else if (m === 3) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Operator</label>
-                        <select id="p_op3" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Operator</div>
+                        <select id="p_op3" class="st-select">
                             <option value="canny">Canny Edge Detector</option>
                             <option value="sobel">Sobel Gradient Operator</option>
                             <option value="laplacian">Laplacian 2nd Derivative</option>
                         </select>
                     </div>
-                    <div id="edgeControls" class="space-y-3 pt-1"></div>
+                    <div id="subEdges"></div>
                 `;
-                const opSelect = document.getElementById('p_op3');
-                opSelect.value = params[3].operator;
-                function updateEdgeControls() {
-                    const ec = document.getElementById('edgeControls');
-                    const cur = opSelect.value;
+                const op = document.getElementById('p_op3');
+                op.value = params[3].operator;
+                function updateSubEdges() {
+                    const se = document.getElementById('subEdges');
+                    const cur = op.value;
                     params[3].operator = cur;
                     if (cur === 'canny') {
-                        ec.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Lower Hysteresis Threshold</span><span class="text-sky-400 font-mono">${params[3].low}</span></div>
-                                <input type="range" id="p_low" min="1" max="255" value="${params[3].low}" class="w-full">
+                        se.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Lower Hysteresis Threshold</div>
+                                <div class="st-slider-val" id="lowVal">${params[3].low}</div>
+                                <input type="range" id="p_low" min="1" max="255" value="${params[3].low}" class="st-slider">
                             </div>
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Upper Hysteresis Threshold</span><span class="text-sky-400 font-mono">${params[3].high}</span></div>
-                                <input type="range" id="p_high" min="1" max="255" value="${params[3].high}" class="w-full">
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Upper Hysteresis Threshold</div>
+                                <div class="st-slider-val" id="highVal">${params[3].high}</div>
+                                <input type="range" id="p_high" min="1" max="255" value="${params[3].high}" class="st-slider">
                             </div>
-                            <div class="flex items-center space-x-2 pt-1">
-                                <input type="checkbox" id="p_inv" ${params[3].invert ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                                <label for="p_inv" class="text-slate-300 cursor-pointer">Invert Edges (Black on White)</label>
+                            <div class="st-checkbox-label ${params[3].invert ? 'checked':''} pt-1" id="invEdgesCheck">
+                                <div class="st-checkbox-box"></div>
+                                <span class="text-xs text-stText font-medium">Invert Edges (Black on White)</span>
                             </div>
                         `;
-                        document.getElementById('p_low').oninput = (e) => { params[3].low = parseInt(e.target.value); updateEdgeControls(); };
-                        document.getElementById('p_high').oninput = (e) => { params[3].high = parseInt(e.target.value); updateEdgeControls(); };
-                        document.getElementById('p_inv').onchange = (e) => { params[3].invert = e.target.checked; triggerReprocess(); };
+                        document.getElementById('p_low').oninput = (e) => { params[3].low = parseInt(e.target.value); document.getElementById('lowVal').innerText = e.target.value; };
+                        document.getElementById('p_high').oninput = (e) => { params[3].high = parseInt(e.target.value); document.getElementById('highVal').innerText = e.target.value; };
+                        document.getElementById('invEdgesCheck').onclick = () => {
+                            params[3].invert = !params[3].invert;
+                            document.getElementById('invEdgesCheck').classList.toggle('checked', params[3].invert);
+                        };
                     } else if (cur === 'sobel') {
-                        ec.innerHTML = `
+                        se.innerHTML = `
                             <div>
-                                <label class="block text-slate-300 mb-1">Sobel Direction</label>
-                                <select id="p_sobelMode" class="w-full text-xs rounded p-1.5">
+                                <div class="text-xs text-stSecondary mb-1.5 font-medium">Sobel Direction</div>
+                                <select id="p_sobelMode" class="st-select">
                                     <option value="Combined Gradient Magnitude">Combined Gradient Magnitude</option>
                                     <option value="Sobel X (Vertical Edges)">Sobel X (Vertical Edges)</option>
                                     <option value="Sobel Y (Horizontal Edges)">Sobel Y (Horizontal Edges)</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-slate-300 mb-1">Kernel Size</label>
-                                <select id="p_ksize3" class="w-full text-xs rounded p-1.5">
+                                <div class="text-xs text-stSecondary mb-1.5 font-medium">Kernel Size</div>
+                                <select id="p_ksize3" class="st-select">
                                     <option value="3">3</option>
                                     <option value="5">5</option>
                                     <option value="7">7</option>
@@ -625,14 +777,14 @@
                             </div>
                         `;
                         document.getElementById('p_sobelMode').value = params[3].mode;
-                        document.getElementById('p_sobelMode').onchange = (e) => { params[3].mode = e.target.value; triggerReprocess(); };
+                        document.getElementById('p_sobelMode').onchange = (e) => { params[3].mode = e.target.value; };
                         document.getElementById('p_ksize3').value = params[3].ksize;
-                        document.getElementById('p_ksize3').onchange = (e) => { params[3].ksize = parseInt(e.target.value); triggerReprocess(); };
+                        document.getElementById('p_ksize3').onchange = (e) => { params[3].ksize = parseInt(e.target.value); };
                     } else {
-                        ec.innerHTML = `
+                        se.innerHTML = `
                             <div>
-                                <label class="block text-slate-300 mb-1">Laplacian Kernel Size</label>
-                                <select id="p_ksizeLap" class="w-full text-xs rounded p-1.5">
+                                <div class="text-xs text-stSecondary mb-1.5 font-medium">Laplacian Kernel Size</div>
+                                <select id="p_ksizeLap" class="st-select">
                                     <option value="1">1</option>
                                     <option value="3">3</option>
                                     <option value="5">5</option>
@@ -641,76 +793,83 @@
                             </div>
                         `;
                         document.getElementById('p_ksizeLap').value = params[3].ksize;
-                        document.getElementById('p_ksizeLap').onchange = (e) => { params[3].ksize = parseInt(e.target.value); triggerReprocess(); };
+                        document.getElementById('p_ksizeLap').onchange = (e) => { params[3].ksize = parseInt(e.target.value); };
                     }
-                    triggerReprocess();
                 }
-                opSelect.onchange = updateEdgeControls;
-                updateEdgeControls();
+                op.onchange = updateSubEdges;
+                updateSubEdges();
             }
             else if (m === 4) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Segmentation Method</label>
-                        <select id="p_tm" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Segmentation Method</div>
+                        <select id="p_tm" class="st-select">
                             <option value="binary">Global Binary Threshold</option>
                             <option value="otsu">Otsu's Bimodal Thresholding</option>
                             <option value="adaptive">Adaptive Gaussian Thresholding</option>
                         </select>
                     </div>
-                    <div id="threshControls" class="space-y-3 pt-1"></div>
+                    <div id="subThresh"></div>
                 `;
-                const tmSelect = document.getElementById('p_tm');
-                tmSelect.value = params[4].type;
-                function updateThreshControls() {
-                    const tc = document.getElementById('threshControls');
-                    const cur = tmSelect.value;
+                const tm = document.getElementById('p_tm');
+                tm.value = params[4].type;
+                function updateSubThresh() {
+                    const st = document.getElementById('subThresh');
+                    const cur = tm.value;
                     params[4].type = cur;
                     if (cur === 'binary') {
-                        tc.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Threshold Value</span><span class="text-sky-400 font-mono">${params[4].thresh}</span></div>
-                                <input type="range" id="p_th" min="0" max="255" value="${params[4].thresh}" class="w-full">
+                        st.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Threshold Value</div>
+                                <div class="st-slider-val" id="thVal">${params[4].thresh}</div>
+                                <input type="range" id="p_th" min="0" max="255" value="${params[4].thresh}" class="st-slider">
                             </div>
-                            <div class="flex items-center space-x-2 pt-1">
-                                <input type="checkbox" id="p_th_inv" ${params[4].invert ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                                <label for="p_th_inv" class="text-slate-300 cursor-pointer">Invert Binary Mask (THRESH_BINARY_INV)</label>
+                            <div class="st-checkbox-label ${params[4].invert ? 'checked':''} pt-1" id="thInvCheck">
+                                <div class="st-checkbox-box"></div>
+                                <span class="text-xs text-stText font-medium">Invert Binary Mask (THRESH_BINARY_INV)</span>
                             </div>
                         `;
-                        document.getElementById('p_th').oninput = (e) => { params[4].thresh = parseInt(e.target.value); updateThreshControls(); };
-                        document.getElementById('p_th_inv').onchange = (e) => { params[4].invert = e.target.checked; triggerReprocess(); };
+                        document.getElementById('p_th').oninput = (e) => { params[4].thresh = parseInt(e.target.value); document.getElementById('thVal').innerText = e.target.value; };
+                        document.getElementById('thInvCheck').onclick = () => {
+                            params[4].invert = !params[4].invert;
+                            document.getElementById('thInvCheck').classList.toggle('checked', params[4].invert);
+                        };
                     } else if (cur === 'otsu') {
-                        tc.innerHTML = `
-                            <div class="flex items-center space-x-2 pt-1">
-                                <input type="checkbox" id="p_blur" ${params[4].blur ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                                <label for="p_blur" class="text-slate-300 cursor-pointer">Pre-apply Gaussian Blur</label>
+                        st.innerHTML = `
+                            <div class="st-checkbox-label ${params[4].blur ? 'checked':''} pt-1" id="otsuBlurCheck">
+                                <div class="st-checkbox-box"></div>
+                                <span class="text-xs text-stText font-medium">Pre-apply Gaussian Blur (Recommended for Noise)</span>
                             </div>
                         `;
-                        document.getElementById('p_blur').onchange = (e) => { params[4].blur = e.target.checked; triggerReprocess(); };
+                        document.getElementById('otsuBlurCheck').onclick = () => {
+                            params[4].blur = !params[4].blur;
+                            document.getElementById('otsuBlurCheck').classList.toggle('checked', params[4].blur);
+                        };
                     } else {
-                        tc.innerHTML = `
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Neighborhood Block Size</span><span class="text-sky-400 font-mono">${params[4].block_size}</span></div>
-                                <input type="range" id="p_bs" min="3" max="41" step="2" value="${params[4].block_size}" class="w-full">
+                        st.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Neighborhood Block Size (Odd)</div>
+                                <div class="st-slider-val" id="bsVal">${params[4].block_size}</div>
+                                <input type="range" id="p_bs" min="3" max="41" step="2" value="${params[4].block_size}" class="st-slider">
                             </div>
-                            <div>
-                                <div class="flex justify-between text-slate-300 mb-1"><span>Constant C</span><span class="text-sky-400 font-mono">${params[4].c}</span></div>
-                                <input type="range" id="p_c" min="-10" max="20" value="${params[4].c}" class="w-full">
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Constant C Subtracted</div>
+                                <div class="st-slider-val" id="cVal">${params[4].c}</div>
+                                <input type="range" id="p_c" min="-10" max="20" value="${params[4].c}" class="st-slider">
                             </div>
                         `;
-                        document.getElementById('p_bs').oninput = (e) => { params[4].block_size = parseInt(e.target.value); updateThreshControls(); };
-                        document.getElementById('p_c').oninput = (e) => { params[4].c = parseInt(e.target.value); updateThreshControls(); };
+                        document.getElementById('p_bs').oninput = (e) => { params[4].block_size = parseInt(e.target.value); document.getElementById('bsVal').innerText = e.target.value; };
+                        document.getElementById('p_c').oninput = (e) => { params[4].c = parseInt(e.target.value); document.getElementById('cVal').innerText = e.target.value; };
                     }
-                    triggerReprocess();
                 }
-                tmSelect.onchange = updateThreshControls;
-                updateThreshControls();
+                tm.onchange = updateSubThresh;
+                updateSubThresh();
             }
             else if (m === 5) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Operation</label>
-                        <select id="p_mop" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Operation</div>
+                        <select id="p_mop" class="st-select">
                             <option value="Dilation">Dilation</option>
                             <option value="Erosion">Erosion</option>
                             <option value="Opening (Noise Removal)">Opening (Noise Removal)</option>
@@ -719,46 +878,50 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-slate-300 mb-1">Structuring Element Shape</label>
-                        <select id="p_mshape" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Structuring Element Shape</div>
+                        <select id="p_mshape" class="st-select">
                             <option value="Rectangle">Rectangle</option>
                             <option value="Ellipse">Ellipse</option>
                             <option value="Cross">Cross</option>
                         </select>
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Kernel Size</span><span class="text-sky-400 font-mono">${params[5].ksize}</span></div>
-                        <input type="range" id="p_mksize" min="3" max="25" step="2" value="${params[5].ksize}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Kernel Size</div>
+                        <div class="st-slider-val" id="mkVal">${params[5].ksize}</div>
+                        <input type="range" id="p_mksize" min="3" max="25" step="2" value="${params[5].ksize}" class="st-slider">
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Iterations</span><span class="text-sky-400 font-mono">${params[5].iterations}</span></div>
-                        <input type="range" id="p_miters" min="1" max="5" value="${params[5].iterations}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Iterations</div>
+                        <div class="st-slider-val" id="miVal">${params[5].iterations}</div>
+                        <input type="range" id="p_miters" min="1" max="5" value="${params[5].iterations}" class="st-slider">
                     </div>
                 `;
                 document.getElementById('p_mop').value = params[5].op;
-                document.getElementById('p_mop').onchange = (e) => { params[5].op = e.target.value; triggerReprocess(); };
+                document.getElementById('p_mop').onchange = (e) => { params[5].op = e.target.value; };
                 document.getElementById('p_mshape').value = params[5].shape;
-                document.getElementById('p_mshape').onchange = (e) => { params[5].shape = e.target.value; triggerReprocess(); };
-                document.getElementById('p_mksize').oninput = (e) => { params[5].ksize = parseInt(e.target.value); renderParameters(); };
-                document.getElementById('p_miters').oninput = (e) => { params[5].iterations = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_mshape').onchange = (e) => { params[5].shape = e.target.value; };
+                document.getElementById('p_mksize').oninput = (e) => { params[5].ksize = parseInt(e.target.value); document.getElementById('mkVal').innerText = e.target.value; };
+                document.getElementById('p_miters').oninput = (e) => { params[5].iterations = parseInt(e.target.value); document.getElementById('miVal').innerText = e.target.value; };
             }
             else if (m === 6) {
                 parameterControls.innerHTML = `
                     <div>
-                        <label class="block text-slate-300 mb-1">Method</label>
-                        <select id="p_hmethod" class="w-full text-xs rounded p-1.5">
+                        <div class="text-xs text-stSecondary mb-1.5 font-medium">Method</div>
+                        <select id="p_hmethod" class="st-select">
                             <option value="clahe">CLAHE (Contrast Limited Adaptive)</option>
                             <option value="global">Standard Global Equalization</option>
                         </select>
                     </div>
-                    <div id="claheGroup" class="space-y-3 pt-1">
-                        <div>
-                            <div class="flex justify-between text-slate-300 mb-1"><span>Clip Limit</span><span class="text-sky-400 font-mono">${params[6].clip}</span></div>
-                            <input type="range" id="p_clip" min="1.0" max="10.0" step="0.5" value="${params[6].clip}" class="w-full">
+                    <div id="claheGroup">
+                        <div class="st-slider-container">
+                            <div class="text-xs text-stSecondary mb-1 font-medium">Clip Limit</div>
+                            <div class="st-slider-val" id="clipVal">${params[6].clip}</div>
+                            <input type="range" id="p_clip" min="1.0" max="10.0" step="0.5" value="${params[6].clip}" class="st-slider">
                         </div>
-                        <div>
-                            <div class="flex justify-between text-slate-300 mb-1"><span>Tile Grid Size</span><span class="text-sky-400 font-mono">${params[6].grid}</span></div>
-                            <input type="range" id="p_grid" min="2" max="16" value="${params[6].grid}" class="w-full">
+                        <div class="st-slider-container">
+                            <div class="text-xs text-stSecondary mb-1 font-medium">Tile Grid Size</div>
+                            <div class="st-slider-val" id="gridVal">${params[6].grid}</div>
+                            <input type="range" id="p_grid" min="2" max="16" value="${params[6].grid}" class="st-slider">
                         </div>
                     </div>
                 `;
@@ -767,217 +930,193 @@
                 hm.onchange = (e) => {
                     params[6].method = e.target.value;
                     document.getElementById('claheGroup').classList.toggle('hidden', e.target.value === 'global');
-                    triggerReprocess();
                 };
-                document.getElementById('p_clip').oninput = (e) => { params[6].clip = parseFloat(e.target.value); renderParameters(); };
-                document.getElementById('p_grid').oninput = (e) => { params[6].grid = parseInt(e.target.value); renderParameters(); };
+                document.getElementById('p_clip').oninput = (e) => { params[6].clip = parseFloat(e.target.value); document.getElementById('clipVal').innerText = e.target.value; };
+                document.getElementById('p_grid').oninput = (e) => { params[6].grid = parseInt(e.target.value); document.getElementById('gridVal').innerText = e.target.value; };
             }
             else if (m === 7) {
                 parameterControls.innerHTML = `
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Difference Sensitivity Threshold</span><span class="text-sky-400 font-mono">${params[7].thresh}</span></div>
-                        <input type="range" id="p_mot_th" min="10" max="80" value="${params[7].thresh}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Difference Sensitivity Threshold</div>
+                        <div class="st-slider-val" id="sensVal">${params[7].thresh}</div>
+                        <input type="range" id="p_sens" min="10" max="80" value="${params[7].thresh}" class="st-slider">
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Min Detection Contour Area (px)</span><span class="text-sky-400 font-mono">${params[7].min_area}</span></div>
-                        <input type="range" id="p_mot_area" min="200" max="8000" step="100" value="${params[7].min_area}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Min Detection Contour Area (px)</div>
+                        <div class="st-slider-val" id="areaVal">${params[7].min_area}</div>
+                        <input type="range" id="p_area" min="200" max="8000" step="100" value="${params[7].min_area}" class="st-slider">
                     </div>
-                    <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_mot_smooth" ${params[7].smooth ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_mot_smooth" class="text-slate-300 cursor-pointer">Running Background Average</label>
+                    <div class="st-checkbox-label ${params[7].smooth ? 'checked':''} pt-1" id="smoothBgCheck">
+                        <div class="st-checkbox-box"></div>
+                        <span class="text-xs text-stText font-medium">Running Background Average (Smooth BG Model)</span>
                     </div>
                 `;
-                document.getElementById('p_mot_th').oninput = (e) => { params[7].thresh = parseInt(e.target.value); renderParameters(); };
-                document.getElementById('p_mot_area').oninput = (e) => { params[7].min_area = parseInt(e.target.value); renderParameters(); };
-                document.getElementById('p_mot_smooth').onchange = (e) => { params[7].smooth = e.target.checked; triggerReprocess(); };
+                document.getElementById('p_sens').oninput = (e) => { params[7].thresh = parseInt(e.target.value); document.getElementById('sensVal').innerText = e.target.value; };
+                document.getElementById('p_area').oninput = (e) => { params[7].min_area = parseInt(e.target.value); document.getElementById('areaVal').innerText = e.target.value; };
+                document.getElementById('smoothBgCheck').onclick = () => {
+                    params[7].smooth = !params[7].smooth;
+                    document.getElementById('smoothBgCheck').classList.toggle('checked', params[7].smooth);
+                };
             }
             else if (m === 8) {
                 parameterControls.innerHTML = `
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Scale Factor (Pyramid Downscale)</span><span class="text-red-400 font-mono">${params[8].scale}</span></div>
-                        <input type="range" id="p_scale" min="1.05" max="1.40" step="0.05" value="${params[8].scale}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Scale Factor (Pyramid Downscale)</div>
+                        <div class="st-slider-val" id="scaleVal">${params[8].scale}</div>
+                        <input type="range" id="p_scale" min="1.05" max="1.40" step="0.05" value="${params[8].scale}" class="st-slider">
                     </div>
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Min Neighbors</span><span class="text-sky-400 font-mono">${params[8].neighbors}</span></div>
-                        <input type="range" id="p_neighbors" min="2" max="10" value="${params[8].neighbors}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Min Neighbors</div>
+                        <div class="st-slider-val" id="neighVal">${params[8].neighbors}</div>
+                        <input type="range" id="p_neigh" min="2" max="10" value="${params[8].neighbors}" class="st-slider">
                     </div>
-                    <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_eyes" ${params[8].eyes ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_eyes" class="text-slate-300 cursor-pointer">Also Detect Eyes within Faces</label>
+                    <div class="st-checkbox-label ${params[8].eyes ? 'checked':''} pt-1" id="trackEyesCheck">
+                        <div class="st-checkbox-box"></div>
+                        <span class="text-xs text-stText font-medium">Also Detect Eyes within Faces</span>
                     </div>
                 `;
-                document.getElementById('p_scale').oninput = (e) => { params[8].scale = parseFloat(e.target.value); renderParameters(); };
-                document.getElementById('p_neighbors').oninput = (e) => { params[8].neighbors = parseInt(e.target.value); renderParameters(); };
-                document.getElementById('p_eyes').onchange = (e) => { params[8].eyes = e.target.checked; triggerReprocess(); };
+                document.getElementById('p_scale').oninput = (e) => { params[8].scale = parseFloat(e.target.value); document.getElementById('scaleVal').innerText = e.target.value; };
+                document.getElementById('p_neigh').oninput = (e) => { params[8].neighbors = parseInt(e.target.value); document.getElementById('neighVal').innerText = e.target.value; };
+                document.getElementById('trackEyesCheck').onclick = () => {
+                    params[8].eyes = !params[8].eyes;
+                    document.getElementById('trackEyesCheck').classList.toggle('checked', params[8].eyes);
+                };
             }
             else if (m === 9) {
                 parameterControls.innerHTML = `
-                    <div>
-                        <div class="flex justify-between text-slate-300 mb-1"><span>Min Contour Area (px)</span><span class="text-sky-400 font-mono">${params[9].min_area}</span></div>
-                        <input type="range" id="p_carea" min="100" max="10000" step="100" value="${params[9].min_area}" class="w-full">
+                    <div class="st-slider-container">
+                        <div class="text-xs text-stSecondary mb-1 font-medium">Min Contour Area (px)</div>
+                        <div class="st-slider-val" id="careaVal">${params[9].min_area}</div>
+                        <input type="range" id="p_carea" min="100" max="10000" step="100" value="${params[9].min_area}" class="st-slider">
                     </div>
-                    <div class="flex items-center space-x-2 pt-1">
-                        <input type="checkbox" id="p_cbnd" ${params[9].bounding ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_cbnd" class="text-slate-300 cursor-pointer">Draw Bounding Rectangles</label>
+                    <div class="st-checkbox-label ${params[9].bounding ? 'checked':''} pt-1" id="bndCheck">
+                        <div class="st-checkbox-box"></div>
+                        <span class="text-xs text-stText font-medium">Draw Bounding Rectangles & Area Labels</span>
                     </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="checkbox" id="p_chull" ${params[9].hull ? 'checked':''} class="rounded bg-slate-900 border-slate-700 text-sky-500">
-                        <label for="p_chull" class="text-slate-300 cursor-pointer">Draw Convex Hulls</label>
+                    <div class="st-checkbox-label ${params[9].hull ? 'checked':''} pt-1" id="hullCheck">
+                        <div class="st-checkbox-box"></div>
+                        <span class="text-xs text-stText font-medium">Draw Convex Hulls</span>
                     </div>
                 `;
-                document.getElementById('p_carea').oninput = (e) => { params[9].min_area = parseInt(e.target.value); renderParameters(); };
-                document.getElementById('p_cbnd').onchange = (e) => { params[9].bounding = e.target.checked; triggerReprocess(); };
-                document.getElementById('p_chull').onchange = (e) => { params[9].hull = e.target.checked; triggerReprocess(); };
-            }
-        }
-
-        function triggerReprocess() {
-            if (currentMode === 'snapshot' && lastSnapshotData) {
-                renderSnapshotProcessing();
+                document.getElementById('p_carea').oninput = (e) => { params[9].min_area = parseInt(e.target.value); document.getElementById('careaVal').innerText = e.target.value; };
+                document.getElementById('bndCheck').onclick = () => {
+                    params[9].bounding = !params[9].bounding;
+                    document.getElementById('bndCheck').classList.toggle('checked', params[9].bounding);
+                };
+                document.getElementById('hullCheck').onclick = () => {
+                    params[9].hull = !params[9].hull;
+                    document.getElementById('hullCheck').classList.toggle('checked', params[9].hull);
+                };
             }
         }
 
         // Render Theory Matching app.py
         function renderTheory() {
-            theoryTitle.innerText = `DIP & CV Mathematical Foundations: Module ${activeModule} (${moduleNames[activeModule]})`;
             const theories = {
-                1: `<p><strong>Color Space Transformation Theory:</strong><br>• <strong>Grayscale conversion (Rec. 601 Luma weighting):</strong> <code class="text-sky-300 font-mono">Y = 0.299 * R + 0.587 * G + 0.114 * B</code>. Peak spectral sensitivity in green spectrum yields 58.7% weighting.<br>• <strong>HSV (Hue, Saturation, Value):</strong> Decouples chromaticity from intensity, making it invariant to illumination changes.<br>• <strong>CIELAB:</strong> Perceptually uniform space (L* Lightness, a* Green-Red, b* Blue-Yellow).</p>`,
-                2: `<p><strong>Spatial Filtering & 2D Convolution Theory:</strong><br>• Discrete 2D spatial convolution applies kernel h(x,y): <code class="text-sky-300 font-mono">g(x,y) = ∑∑ f(x-s, y-t) * h(s,t)</code>.<br>• <strong>Gaussian 2D Kernel:</strong> <code class="text-sky-300 font-mono">G(x,y) = [1/(2πσ²)] * exp(-(x²+y²)/(2σ²))</code>.<br>• <strong>Bilateral Filter:</strong> Combines spatial Gaussian distance weighting with radiometric intensity similarity to smooth skin while keeping sharp edges.</p>`,
-                3: `<p><strong>Edge Detection & Gradient Operators:</strong><br>• <strong>Canny Pipeline:</strong> 1. Gaussian Smoothing → 2. Gradient Computation via Sobel → 3. Non-Maximum Suppression (thins edges to 1px) → 4. Hysteresis Thresholding with low/high cutoffs.<br>• <strong>Sobel Gradients:</strong> <code class="text-sky-300 font-mono">|G| = sqrt(Gx² + Gy²)</code>, <code class="text-sky-300 font-mono">θ = atan2(Gy, Gx)</code>.</p>`,
-                4: `<p><strong>Image Segmentation & Thresholding:</strong><br>• <strong>Global Thresholding:</strong> <code class="text-sky-300 font-mono">g(x,y) = 255 if f(x,y) ≥ T else 0</code>.<br>• <strong>Otsu's Criterion:</strong> Automatically selects optimal threshold T* by maximizing between-class variance <code class="text-sky-300 font-mono">σB²(T) = ω0(T)ω1(T)[μ0(T) - μ1(T)]²</code>.</p>`,
-                5: `<p><strong>Mathematical Morphology:</strong><br>• <strong>Dilation:</strong> Expands foreground boundaries.<br>• <strong>Erosion:</strong> Shrinks foreground and removes isolated pixel noise.<br>• <strong>Opening:</strong> Erosion followed by dilation; clears noise.<br>• <strong>Closing:</strong> Dilation followed by erosion; bridges breaks.<br>• <strong>Morphological Gradient:</strong> Dilation minus Erosion (extracts boundary edges).</p>`,
-                6: `<p><strong>Histogram Equalization Theory:</strong><br>• Stretches contrast across dynamic range via CDF: <code class="text-sky-300 font-mono">s_k = (L-1) * ∑ (n_j / N)</code>.<br>• <strong>CLAHE:</strong> Equalizes local 8x8 contextual tiles and clips the histogram slope to prevent noise amplification.</p>`,
-                7: `<p><strong>Temporal Frame Differencing (Computer Vision Motion Detection):</strong><br>• Computes temporal gradient across consecutive frames: <code class="text-sky-300 font-mono">ΔI_t(x,y) = |I_t(x,y) - I_{t-1}(x,y)| > θ</code>.<br>• Connected component clustering groups active pixels into bounded physical motion zones with real-time target alerts.</p>`,
-                8: `<p><strong>Object Localization via Viola-Jones & BlazeFace Landmarks:</strong><br>• <strong>Integral Image:</strong> <code class="text-sky-300 font-mono">ii(x,y) = ∑∑ i(x',y')</code> evaluates Haar-like features in constant O(1) time.<br>• <strong>Attentional Cascade:</strong> Quickly rejects 90%+ non-face regions at early stages.<br>• <strong>Ocular Landmarks:</strong> Regresses coordinates for left and right eyes to track head orientation.</p>`,
-                9: `<p><strong>Contour Tracing & Spatial Moments:</strong><br>• Border following extracts topological boundaries of connected components.<br>• Spatial moments: <code class="text-sky-300 font-mono">M_pq = ∑∑ x^p * y^q * f(x,y)</code>.<br>• Centroid: <code class="text-sky-300 font-mono">Xc = M10/M00, Yc = M01/M00</code>.</p>`
+                1: `<p><strong>Color Space Transformation Theory:</strong><br>• <strong>Grayscale conversion (Luma weighting / Rec. 601):</strong><br><code class="text-sky-300 font-mono">Y = 0.299 * R + 0.587 * G + 0.114 * B</code><br>Human photoreceptors have peak spectral sensitivity in the green spectrum, hence the 58.7% weight.<br>• <strong>HSV (Hue, Saturation, Value):</strong> Decouples chromaticity from intensity, making it invariant to lighting fluctuations.<br>• <strong>CIELAB:</strong> Designed to be perceptually uniform; L* is lightness, a* represents green-red, b* represents blue-yellow.</p>`,
+                2: `<p><strong>Spatial Filtering & 2D Convolution Theory:</strong><br>• Linear filtering applies a spatial convolution mask h(x,y): <code class="text-sky-300 font-mono">g(x,y) = ∑∑ f(x-s, y-t) * h(s,t)</code>.<br>• <strong>Gaussian 2D Kernel:</strong> <code class="text-sky-300 font-mono">G(x,y) = [1/(2πσ²)] * exp(-(x²+y²)/(2σ²))</code>.<br>• <strong>Bilateral Filter:</strong> Combines spatial distance weighting with intensity similarity to smooth skin while keeping sharp edges.</p>`,
+                3: `<p><strong>Edge Detection & Gradient Operators:</strong><br>• <strong>Canny Multi-Stage Pipeline:</strong> 1. Gaussian Smoothing → 2. Sobel Gradients <code class="text-sky-300 font-mono">|G|=sqrt(Gx²+Gy²)</code> → 3. Non-Maximum Suppression → 4. Hysteresis Thresholding.</p>`,
+                4: `<p><strong>Image Segmentation & Thresholding:</strong><br>• <strong>Global Thresholding:</strong> <code class="text-sky-300 font-mono">g(x,y) = 255 if f(x,y) ≥ T else 0</code>.<br>• <strong>Otsu's Thresholding Criterion:</strong> Automatically selects optimal threshold T* by maximizing between-class variance <code class="text-sky-300 font-mono">σB²(T) = ω0(T)ω1(T)[μ0(T) - μ1(T)]²</code>.</p>`,
+                5: `<p><strong>Mathematical Morphology:</strong><br>• <strong>Dilation:</strong> Expands foreground boundaries.<br>• <strong>Erosion:</strong> Shrinks foreground and removes isolated noise.<br>• <strong>Opening:</strong> Erosion followed by dilation.<br>• <strong>Closing:</strong> Dilation followed by erosion.<br>• <strong>Morphological Gradient:</strong> Dilation minus Erosion (extracts edges).</p>`,
+                6: `<p><strong>Histogram Equalization Theory:</strong><br>• Stretches contrast across dynamic range via CDF: <code class="text-sky-300 font-mono">s_k = (L-1) * ∑ (n_j / N)</code>.<br>• <strong>CLAHE:</strong> Equalizes local 8x8 contextual tiles and clips the histogram slope.</p>`,
+                7: `<p><strong>Temporal Frame Differencing (Computer Vision Motion Detection):</strong><br>• Measures temporal gradient between consecutive frames: <code class="text-sky-300 font-mono">ΔI_t(x,y) = |I_t(x,y) - I_{t-1}(x,y)| > θ</code>.<br>• Connected component clustering groups active pixels into bounded physical motion zones with real-time target alerts.</p>`,
+                8: `<p><strong>Object Localization via Viola-Jones (Haar Cascades):</strong><br>• Rectangular Haar-like features computed in constant O(1) time via the <strong>Integral Image</strong> <code class="text-sky-300 font-mono">ii(x,y) = ∑∑ i(x',y')</code>.<br>• Attentional cascade rapidly rejects non-face regions before landmark localization.</p>`,
+                9: `<p><strong>Contour Analysis & Boundary Traversal:</strong><br>• Suzuki's border following algorithm identifies topological boundaries of connected components.<br>• Geometric spatial moments: <code class="text-sky-300 font-mono">M_pq = ∑∑ x^p * y^q * f(x,y)</code> extract centroid and orientation.</p>`
             };
-            theoryBody.innerHTML = theories[activeModule] || '';
+            theoryContent.innerHTML = theories[activeModule] || '';
         }
 
-        // Module Selection Handler
-        moduleSelect.addEventListener('change', (e) => {
+        // Module selection
+        moduleSelect.onchange = (e) => {
             activeModule = parseInt(e.target.value);
-            processedStreamTitle.innerText = `Live Processed Vision: ${moduleNames[activeModule]}`;
+            rightHeaderTitle.innerText = `Live Processed Vision: ${moduleNames[activeModule]}`;
             renderParameters();
             renderTheory();
-            triggerReprocess();
-        });
+        };
 
-        // Ingestion Radio Handlers
-        const radios = document.querySelectorAll('input[name="cam_mode"]');
-        radios.forEach(radio => {
-            radio.addEventListener('change', (e) => {
-                currentMode = e.target.value;
+        // Radio interactions for ingestion mode
+        const radioItems = document.querySelectorAll('#ingestionRadios .st-radio-label');
+        radioItems.forEach(item => {
+            item.onclick = () => {
+                radioItems.forEach(r => r.classList.remove('active'));
+                item.classList.add('active');
+                currentMode = item.getAttribute('data-mode');
+
                 if (currentMode === 'snapshot') {
-                    snapshotModeSection.classList.remove('hidden');
-                    streamModeSection.classList.add('hidden');
-                    startCameraForSnapshot();
+                    streamViewSection.classList.add('hidden');
+                    snapshotViewSection.classList.remove('hidden');
+                    startCameraStream();
                 } else if (currentMode === 'synthetic') {
-                    snapshotModeSection.classList.add('hidden');
-                    streamModeSection.classList.remove('hidden');
-                    webcamVideo.classList.add('hidden');
-                    syntheticCanvas.classList.remove('hidden');
-                    leftDeviceTag.innerHTML = `🧪 <b>Synthetic Generator</b> (Offline Mode)`;
-                    camStatusBadge.innerText = '🟢 Synthetic Active';
-                    camStatusBadge.className = 'badge-green';
-                    leftOverlay.classList.add('opacity-0', 'pointer-events-none');
-                    rightOverlay.classList.add('opacity-0', 'pointer-events-none');
+                    streamViewSection.classList.remove('hidden');
+                    snapshotViewSection.classList.add('hidden');
+                    rawVideo.classList.add('hidden');
+                    synthCanvas.classList.remove('hidden');
+                    leftBadgeText.innerHTML = `🧪 <b>Synthetic Demo</b> (Offline Mode)`;
                 } else {
-                    snapshotModeSection.classList.add('hidden');
-                    streamModeSection.classList.remove('hidden');
-                    webcamVideo.classList.remove('hidden');
-                    syntheticCanvas.classList.add('hidden');
-                    leftDeviceTag.innerHTML = `🟢 <b>Live Ingestion</b> (FaceTime HD Device 0)`;
-                    startLiveStream();
+                    streamViewSection.classList.remove('hidden');
+                    snapshotViewSection.classList.add('hidden');
+                    rawVideo.classList.remove('hidden');
+                    synthCanvas.classList.add('hidden');
+                    leftBadgeText.innerHTML = `🟢 <b>Live Ingestion</b> (FaceTime HD Device 0)`;
+                    startCameraStream();
                 }
-            });
+            };
         });
 
-        // Layout Selection Handler
-        layoutSelect.addEventListener('change', (e) => {
-            if (e.target.value === 'processed') {
-                colLeftWrapper.classList.add('hidden');
-            } else {
-                colLeftWrapper.classList.remove('hidden');
-            }
+        // Radio interactions for display layout
+        const layoutItems = document.querySelectorAll('#layoutRadios .st-radio-label');
+        layoutItems.forEach(item => {
+            item.onclick = () => {
+                layoutItems.forEach(l => l.classList.remove('active'));
+                item.classList.add('active');
+                currentLayout = item.getAttribute('data-layout');
+                if (currentLayout === 'processed') {
+                    colLeft.classList.add('hidden');
+                } else {
+                    colLeft.classList.remove('hidden');
+                }
+            };
         });
 
-        // Camera Activation Toggle
-        streamActiveToggle.addEventListener('change', (e) => {
+        // Stream toggle
+        streamToggle.onchange = (e) => {
             isStreaming = e.target.checked;
-            if (isStreaming) {
-                if (currentMode === 'stream') startLiveStream();
-                camStatusBadge.innerText = '🟢 Stream Active';
-                camStatusBadge.className = 'badge-green';
-                leftOverlay.classList.add('opacity-0', 'pointer-events-none');
-                rightOverlay.classList.add('opacity-0', 'pointer-events-none');
-            } else {
-                camStatusBadge.innerText = 'Stream Paused';
-                camStatusBadge.className = 'badge-amber';
-                leftOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                rightOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                leftOverlayText.innerText = 'Stream Paused';
-            }
-        });
+        };
 
-        mirrorToggle.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                webcamVideo.classList.add('-scale-x-100');
-                leftMirrorTag.innerHTML = `🪞 <b>Mirrored View</b>`;
-            } else {
-                webcamVideo.classList.remove('-scale-x-100');
-                leftMirrorTag.innerHTML = `Normal View`;
-            }
-            triggerReprocess();
-        });
+        // Mirror checkbox
+        mirrorCheckboxWrapper.onclick = () => {
+            isMirrored = !isMirrored;
+            mirrorCheckboxWrapper.classList.toggle('checked', isMirrored);
+            rawVideo.classList.toggle('-scale-x-100', isMirrored);
+            leftMirrorText.innerHTML = isMirrored ? `🪞 <b>Mirrored View</b>` : `Normal View`;
+        };
 
-        // Start WebRTC Stream
-        async function startLiveStream() {
+        // Start WebRTC camera stream
+        async function startCameraStream() {
             try {
                 if (!mediaStream) {
                     mediaStream = await navigator.mediaDevices.getUserMedia({
                         video: { width: 640, height: 480, facingMode: 'user' },
                         audio: false
                     });
-                    webcamVideo.srcObject = mediaStream;
+                    rawVideo.srcObject = mediaStream;
                 }
-                webcamVideo.onloadedmetadata = () => {
-                    webcamVideo.play();
-                    isStreaming = true;
-                    camStatusBadge.innerText = '🟢 Stream Active';
-                    camStatusBadge.className = 'badge-green';
-                    leftOverlay.classList.add('opacity-0', 'pointer-events-none');
-                    rightOverlay.classList.add('opacity-0', 'pointer-events-none');
+                rawVideo.onloadedmetadata = () => {
+                    rawVideo.play();
                 };
             } catch (err) {
-                console.warn('Webcam access error:', err);
-                leftOverlayText.innerText = 'Webcam Access Denied - Using Synthetic Fallback';
+                console.warn('Camera stream error:', err);
             }
         }
 
-        async function startCameraForSnapshot() {
-            if (!mediaStream) {
-                try {
-                    mediaStream = await navigator.mediaDevices.getUserMedia({
-                        video: { width: 640, height: 480, facingMode: 'user' },
-                        audio: false
-                    });
-                    webcamVideo.srcObject = mediaStream;
-                    webcamVideo.play();
-                } catch (e) {
-                    console.warn(e);
-                }
-            }
-        }
-
-        // Model Loader for BlazeFace
+        // Load BlazeFace Model
         async function loadBlazeFace() {
             if (window.blazeface && !blazefaceModel && !modelLoading) {
                 modelLoading = true;
                 try {
                     blazefaceModel = await window.blazeface.load();
                 } catch (e) {
-                    console.warn('BlazeFace load error:', e);
+                    console.warn('BlazeFace loading error:', e);
                 } finally {
                     modelLoading = false;
                 }
@@ -985,24 +1124,21 @@
         }
 
         // =========================================================================
-        // CORE FRAME LOOP
+        // REAL-TIME FRAME PROCESSING LOOP
         // =========================================================================
-        async function mainLoop() {
+        async function processLiveLoop() {
             if (isStreaming && currentMode !== 'snapshot') {
                 const now = performance.now();
                 frameCount++;
                 if (now - lastTime >= 500) {
                     fps = ((frameCount * 1000) / (now - lastTime)).toFixed(1);
-                    streamFpsBadge.innerText = `${fps} FPS`;
-                    telemetryFps.innerText = `⚡ ${fps} FPS`;
                     frameCount = 0;
                     lastTime = now;
                 }
 
                 const w = 640, h = 480;
-                const isMirrored = mirrorToggle.checked;
 
-                // Step 1: Render source onto offscreen canvas
+                // 1. Draw source onto offscreen canvas (applying mirror if set)
                 offscreenCtx.save();
                 if (isMirrored) {
                     offscreenCtx.translate(w, 0);
@@ -1011,80 +1147,63 @@
 
                 if (currentMode === 'synthetic') {
                     syntheticT += 0.03;
-                    renderSyntheticFrame(synthCtx, syntheticT, w, h);
-                    offscreenCtx.drawImage(syntheticCanvas, 0, 0, w, h);
+                    renderSyntheticScene(synthCtx, syntheticT, w, h);
+                    offscreenCtx.drawImage(synthCanvas, 0, 0, w, h);
                 } else {
-                    if (webcamVideo.readyState >= 2) {
-                        offscreenCtx.drawImage(webcamVideo, 0, 0, w, h);
+                    if (rawVideo.readyState >= 2) {
+                        offscreenCtx.drawImage(rawVideo, 0, 0, w, h);
                     } else {
                         syntheticT += 0.03;
-                        renderSyntheticFrame(synthCtx, syntheticT, w, h);
-                        offscreenCtx.drawImage(syntheticCanvas, 0, 0, w, h);
+                        renderSyntheticScene(synthCtx, syntheticT, w, h);
+                        offscreenCtx.drawImage(synthCanvas, 0, 0, w, h);
                     }
                 }
                 offscreenCtx.restore();
 
-                // Step 2: Execute active module onto processedCanvas
+                // 2. Execute pipeline onto procCanvas
                 const imgData = offscreenCtx.getImageData(0, 0, w, h);
-                await executePipeline(imgData, procCtx, offscreenCanvas, activeModule, params[activeModule], w, h);
+                await runPipeline(imgData, procCtx, offscreenCanvas, activeModule, params[activeModule], w, h, fps);
             }
 
-            requestAnimationFrame(mainLoop);
+            requestAnimationFrame(processLiveLoop);
         }
 
-        // =========================================================================
-        // SYNTHETIC FRAME GENERATOR (Matching app.py get_synthetic_frame)
-        // =========================================================================
-        function renderSyntheticFrame(ctx, t, w, h) {
+        // Synthetic frame matching app.py get_synthetic_frame
+        function renderSyntheticScene(ctx, t, w, h) {
             ctx.fillStyle = '#1E232D';
             ctx.fillRect(0, 0, w, h);
+            ctx.strokeStyle = '#2D3748'; ctx.lineWidth = 1;
+            for (let y = 0; y < h; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+            for (let x = 0; x < w; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
 
-            // Perspective Grid
-            ctx.strokeStyle = '#2D3748';
-            ctx.lineWidth = 1;
-            for (let y = 0; y < h; y += 40) {
-                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
-            }
-            for (let x = 0; x < w; x += 40) {
-                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
-            }
-
-            // Animated Moving Circle
             const cx = Math.round(w / 2 + Math.sin(t * 2.0) * 180);
             const cy = Math.round(h / 2 + Math.cos(t * 1.5) * 120);
-            ctx.fillStyle = '#00C8FF';
-            ctx.beginPath(); ctx.arc(cx, cy, 55, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#00C8FF'; ctx.beginPath(); ctx.arc(cx, cy, 55, 0, 2 * Math.PI); ctx.fill();
             ctx.strokeStyle = '#FFFFFF'; ctx.lineWidth = 3; ctx.stroke();
 
-            // Moving Rectangle
             const rx = Math.round(w / 2 + Math.cos(t * 1.0) * 140);
             const ry = Math.round(h / 2 + Math.sin(t * 2.5) * 80);
-            ctx.fillStyle = '#FF3264';
-            ctx.fillRect(rx - 40, ry - 30, 80, 60);
+            ctx.fillStyle = '#FF3264'; ctx.fillRect(rx - 40, ry - 30, 80, 60);
 
-            // Synthetic Face Target
-            const fx = Math.round(w * 0.75);
-            const fy = Math.round(h * 0.35);
-            ctx.fillStyle = '#DCC8B4';
-            ctx.beginPath(); ctx.arc(fx, fy, 45, 0, 2 * Math.PI); ctx.fill();
+            const fx = Math.round(w * 0.75), fy = Math.round(h * 0.35);
+            ctx.fillStyle = '#DCC8B4'; ctx.beginPath(); ctx.arc(fx, fy, 45, 0, 2 * Math.PI); ctx.fill();
             ctx.fillStyle = '#282828';
             ctx.beginPath(); ctx.arc(fx - 15, fy - 10, 6, 0, 2 * Math.PI); ctx.fill();
             ctx.beginPath(); ctx.arc(fx + 15, fy - 10, 6, 0, 2 * Math.PI); ctx.fill();
             ctx.beginPath(); ctx.arc(fx, fy + 15, 12, 0, Math.PI); ctx.stroke();
 
-            ctx.fillStyle = '#00FFC8';
-            ctx.font = '12px monospace';
+            ctx.fillStyle = '#00FFC8'; ctx.font = '12px monospace';
             ctx.fillText('SYNTHETIC DEMO STREAM (OFFLINE FALLBACK)', 15, 25);
         }
 
         // =========================================================================
-        // PIPELINE EXECUTION FOR ALL 9 MODULES
+        // OPENCV ALGORITHM PIPELINE (Exactly matching localhost:8501)
         // =========================================================================
-        async function executePipeline(imgData, targetCtx, srcCanvas, mod, p, w, h) {
+        async function runPipeline(imgData, ctx, srcCanvas, mod, p, w, h, curFps) {
             const data = imgData.data;
 
             if (mod === 1) {
-                // Color Spaces
+                // Color Space Transformations
                 const cs = p.color_space;
                 const cv = p.channel_view;
                 for (let i = 0; i < data.length; i += 4) {
@@ -1093,16 +1212,16 @@
                         const y = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
                         data[i] = y; data[i+1] = y; data[i+2] = y;
                     } else if (cs === 'HSV') {
-                        const max = Math.max(r, g, b), min = Math.min(r, g, b), delta = max - min;
+                        const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
                         let hue = 0;
-                        if (delta > 0) {
-                            if (max === r) hue = ((g - b) / delta) % 6;
-                            else if (max === g) hue = (b - r) / delta + 2;
-                            else hue = (r - g) / delta + 4;
+                        if (d > 0) {
+                            if (max === r) hue = ((g - b) / d) % 6;
+                            else if (max === g) hue = (b - r) / d + 2;
+                            else hue = (r - g) / d + 4;
                             hue = Math.round(hue * 60);
                             if (hue < 0) hue += 360;
                         }
-                        const sat = max === 0 ? 0 : Math.round((delta / max) * 255);
+                        const sat = max === 0 ? 0 : Math.round((d / max) * 255);
                         const val = max;
                         if (cv === 'Channel 1') { const hv = Math.round((hue / 360) * 255); data[i] = hv; data[i+1] = 255 - hv; data[i+2] = 200; }
                         else if (cv === 'Channel 2') { data[i] = sat; data[i+1] = sat; data[i+2] = sat; }
@@ -1117,7 +1236,6 @@
                         else if (cv === 'Channel 3') { data[i] = 40; data[i+1] = bVal; data[i+2] = 255 - bVal; }
                         else { data[i] = l; data[i+1] = a; data[i+2] = bVal; }
                     } else {
-                        // YCrCb
                         const y = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
                         const cr = Math.round(128 + 0.5 * r - 0.418 * g - 0.081 * b);
                         const cb = Math.round(128 - 0.168 * r - 0.331 * g + 0.5 * b);
@@ -1127,8 +1245,12 @@
                         else { data[i] = y; data[i+1] = cr; data[i+2] = cb; }
                     }
                 }
-                targetCtx.putImageData(imgData, 0, 0);
-                updateTelemetryGeneral(`Color: ${cs} (${cv})`);
+                ctx.putImageData(imgData, 0, 0);
+                rightTelemetryPill.innerHTML = `
+                    <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[1]}</span>
+                    <span>🔬 <b>Color Space: ${cs} (${cv})</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                `;
             }
             else if (mod === 2) {
                 // Spatial Filtering
@@ -1147,14 +1269,13 @@
                                     r += src[idx] * weight; g += src[idx+1] * weight; b += src[idx+2] * weight;
                                 }
                             }
-                            const outIdx = (y * w + x) * 4;
-                            data[outIdx] = Math.min(255, Math.max(0, r));
-                            data[outIdx+1] = Math.min(255, Math.max(0, g));
-                            data[outIdx+2] = Math.min(255, Math.max(0, b));
+                            const o = (y * w + x) * 4;
+                            data[o] = Math.min(255, Math.max(0, r));
+                            data[o+1] = Math.min(255, Math.max(0, g));
+                            data[o+2] = Math.min(255, Math.max(0, b));
                         }
                     }
                 } else {
-                    // Gaussian / Median / Bilateral Approximation
                     const k = Math.min(p.ksize || 9, 15);
                     const half = Math.floor(k / 2);
                     for (let y = half; y < h - half; y += 2) {
@@ -1170,15 +1291,19 @@
                             const avgR = r / count, avgG = g / count, avgB = b / count;
                             for (let dy = 0; dy < 2; dy++) {
                                 for (let dx = 0; dx < 2; dx++) {
-                                    const oIdx = ((y + dy) * w + (x + dx)) * 4;
-                                    data[oIdx] = avgR; data[oIdx+1] = avgG; data[oIdx+2] = avgB;
+                                    const o = ((y + dy) * w + (x + dx)) * 4;
+                                    data[o] = avgR; data[o+1] = avgG; data[o+2] = avgB;
                                 }
                             }
                         }
                     }
                 }
-                targetCtx.putImageData(imgData, 0, 0);
-                updateTelemetryGeneral(`Filter: ${ft.toUpperCase()}`);
+                ctx.putImageData(imgData, 0, 0);
+                rightTelemetryPill.innerHTML = `
+                    <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[2]}</span>
+                    <span>🔬 <b>Filter: ${ft.toUpperCase()}</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                `;
             }
             else if (mod === 3) {
                 // Edge Detection & Gradients
@@ -1210,20 +1335,22 @@
                             else if (p.mode.includes('Y')) val = Math.abs(gy);
                             val = Math.min(255, val);
                             const o = idx * 4;
-                            // Jet colormap
                             data[o] = val; data[o+1] = Math.round(255 - val * 0.8); data[o+2] = Math.round(val * 1.5);
                         } else {
-                            // Laplacian
                             const lap = Math.abs(gray[idx - w] + gray[idx + w] + gray[idx - 1] + gray[idx + 1] - 4 * gray[idx]);
                             const o = idx * 4; data[o] = lap; data[o+1] = lap; data[o+2] = lap;
                         }
                     }
                 }
-                targetCtx.putImageData(imgData, 0, 0);
-                updateTelemetryGeneral(`Edges: ${op.toUpperCase()}`);
+                ctx.putImageData(imgData, 0, 0);
+                rightTelemetryPill.innerHTML = `
+                    <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[3]}</span>
+                    <span>🔬 <b>Operator: ${op.toUpperCase()}</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                `;
             }
             else if (mod === 4) {
-                // Thresholding
+                // Image Thresholding
                 let thresh = p.thresh;
                 if (p.type === 'otsu') {
                     const hist = new Int32Array(256);
@@ -1252,11 +1379,15 @@
                     if (p.invert) val = 255 - val;
                     data[i] = val; data[i+1] = val; data[i+2] = val;
                 }
-                targetCtx.putImageData(imgData, 0, 0);
-                updateTelemetryGeneral(`Threshold: T=${thresh}`);
+                ctx.putImageData(imgData, 0, 0);
+                rightTelemetryPill.innerHTML = `
+                    <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[4]}</span>
+                    <span>🔬 <b>Threshold: T=${thresh}</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                `;
             }
             else if (mod === 5) {
-                // Morphology
+                // Morphological Operations
                 const src = new Uint8ClampedArray(data);
                 const k = Math.min(p.ksize || 5, 9);
                 const half = Math.floor(k / 2);
@@ -1283,8 +1414,12 @@
                         }
                     }
                 }
-                targetCtx.putImageData(imgData, 0, 0);
-                updateTelemetryGeneral(`Morphology: ${p.op.split(' ')[0]}`);
+                ctx.putImageData(imgData, 0, 0);
+                rightTelemetryPill.innerHTML = `
+                    <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[5]}</span>
+                    <span>🔬 <b>Morphology: ${p.op}</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                `;
             }
             else if (mod === 6) {
                 // Histogram Equalization
@@ -1301,340 +1436,451 @@
                     const eq = Math.round(cdf[y] * 255);
                     data[i] = eq; data[i+1] = eq; data[i+2] = eq;
                 }
-                targetCtx.putImageData(imgData, 0, 0);
-                updateTelemetryGeneral(p.method === 'clahe' ? 'CLAHE Adaptive' : 'Global Equalization');
+                ctx.putImageData(imgData, 0, 0);
+                rightTelemetryPill.innerHTML = `
+                    <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[6]}</span>
+                    <span>🔬 <b>Method: ${p.method === 'clahe' ? 'CLAHE Adaptive' : 'Global Equalization'}</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                `;
             }
             else if (mod === 7) {
-                // Real-Time Motion Detection (Temporal Frame Differencing)
+                // =====================================================================
+                // REAL-TIME MOTION DETECTION (WITH MULTIPLE BOUNDING BOXES & LABELS)
+                // =====================================================================
+                // Draw raw frame first
+                ctx.drawImage(srcCanvas, 0, 0, w, h);
+
                 if (!prevFrameData) {
                     prevFrameData = new Uint8ClampedArray(data);
-                    targetCtx.putImageData(imgData, 0, 0);
                     return;
                 }
+
                 const thresh = p.thresh || 25;
-                let motionPixels = 0;
-                let minX = w, minY = h, maxX = 0, maxY = 0;
+                const minArea = p.min_area || 1000;
 
-                for (let i = 0; i < data.length; i += 4) {
-                    const delta = (Math.abs(data[i] - prevFrameData[i]) +
-                                   Math.abs(data[i+1] - prevFrameData[i+1]) +
-                                   Math.abs(data[i+2] - prevFrameData[i+2])) / 3;
-                    const px = (i / 4) % w, py = Math.floor((i / 4) / w);
+                // Downsample into 80x60 grid for fast connected-component blob detection
+                const gw = 80, gh = 60, scale = 8;
+                const grid = new Int32Array(gw * gh);
+                let totalMotionPixels = 0;
 
-                    if (delta > thresh) {
-                        motionPixels++;
-                        if (px < minX) minX = px; if (px > maxX) maxX = px;
-                        if (py < minY) minY = py; if (py > maxY) maxY = py;
-                        data[i] = 255; data[i+1] = 50; data[i+2] = 50;
-                    }
+                for (let y = 0; y < h; y += 4) {
+                    const gy = Math.floor(y / scale);
+                    for (let x = 0; x < w; x += 4) {
+                        const gx = Math.floor(x / scale);
+                        const idx = (y * w + x) * 4;
+                        const delta = (Math.abs(data[idx] - prevFrameData[idx]) +
+                                       Math.abs(data[idx+1] - prevFrameData[idx+1]) +
+                                       Math.abs(data[idx+2] - prevFrameData[idx+2])) / 3;
 
-                    if (p.smooth) {
-                        prevFrameData[i] = prevFrameData[i] * 0.85 + data[i] * 0.15;
-                        prevFrameData[i+1] = prevFrameData[i+1] * 0.85 + data[i+1] * 0.15;
-                        prevFrameData[i+2] = prevFrameData[i+2] * 0.85 + data[i+2] * 0.15;
-                    } else {
-                        prevFrameData[i] = data[i]; prevFrameData[i+1] = data[i+1]; prevFrameData[i+2] = data[i+2];
+                        if (delta > thresh) {
+                            grid[gy * gw + gx] += 16;
+                            totalMotionPixels += 16;
+                        }
+
+                        if (p.smooth) {
+                            prevFrameData[idx] = prevFrameData[idx] * 0.85 + data[idx] * 0.15;
+                            prevFrameData[idx+1] = prevFrameData[idx+1] * 0.85 + data[idx+1] * 0.15;
+                            prevFrameData[idx+2] = prevFrameData[idx+2] * 0.85 + data[idx+2] * 0.15;
+                        } else {
+                            prevFrameData[idx] = data[idx];
+                            prevFrameData[idx+1] = data[idx+1];
+                            prevFrameData[idx+2] = data[idx+2];
+                        }
                     }
                 }
 
-                targetCtx.putImageData(imgData, 0, 0);
-                const motionPct = ((motionPixels / (w * h)) * 100 * 2.5).toFixed(1);
+                // BFS Clustering to find separate motion regions (head, shoulder, hands, etc.)
+                const visited = new Uint8Array(gw * gh);
+                const clusters = [];
 
-                if (motionPixels > (p.min_area || 1000) && maxX > minX) {
-                    targetCtx.strokeStyle = '#EF4444';
-                    targetCtx.lineWidth = 3;
-                    targetCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-                    targetCtx.fillStyle = '#EF4444';
-                    targetCtx.font = 'bold 13px monospace';
-                    targetCtx.fillText(`MOTION: ${motionPct}%`, minX + 5, Math.max(18, minY - 8));
+                for (let gy = 0; gy < gh; gy++) {
+                    for (let gx = 0; gx < gw; gx++) {
+                        const gidx = gy * gw + gx;
+                        if (visited[gidx] || grid[gidx] < 30) continue;
 
-                    telemetryStatus.innerText = '🚨 MOTION DETECTED';
-                    telemetryStatus.className = 'font-bold text-red-400';
-                    telemetryFaceSpan.innerHTML = `🏃 Motion Index: <b class="text-red-400">${motionPct}%</b>`;
-                    telemetryEyeSpan.innerHTML = `📐 Sensitivity: <b>${thresh}</b>`;
-                    telemetryCenterSpan.innerHTML = `Targets: <b>1</b>`;
+                        let queue = [ [gx, gy] ];
+                        visited[gidx] = 1;
+                        let minGx = gx, maxGx = gx, minGy = gy, maxGy = gy;
+                        let clusterArea = 0;
+
+                        while (queue.length > 0) {
+                            const [currX, currY] = queue.pop();
+                            clusterArea += grid[currY * gw + currX];
+                            if (currX < minGx) minGx = currX; if (currX > maxGx) maxGx = currX;
+                            if (currY < minGy) minGy = currY; if (currY > maxGy) maxGy = currY;
+
+                            // 8-neighbor exploration
+                            for (let dy = -1; dy <= 1; dy++) {
+                                for (let dx = -1; dx <= 1; dx++) {
+                                    const nx = currX + dx, ny = currY + dy;
+                                    if (nx >= 0 && nx < gw && ny >= 0 && ny < gh) {
+                                        const nidx = ny * gw + nx;
+                                        if (!visited[nidx] && grid[nidx] >= 30) {
+                                            visited[nidx] = 1;
+                                            queue.push([nx, ny]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (clusterArea >= minArea) {
+                            clusters.push({
+                                x: Math.max(0, minGx * scale - 10),
+                                y: Math.max(0, minGy * scale - 10),
+                                w: Math.min(w, (maxGx - minGx + 1) * scale + 20),
+                                h: Math.min(h, (maxGy - minGy + 1) * scale + 20),
+                                area: clusterArea
+                            });
+                        }
+                    }
+                }
+
+                const motionPct = Math.min(100.0, (totalMotionPixels / (w * h)) * 100 * 2.5);
+                const motionDetected = clusters.length > 0;
+
+                // Draw HUD in-frame text exactly matching app.py
+                const hudText = motionDetected ? `MOTION DETECTED (${motionPct.toFixed(1)}%)` : "SCENE IDLE (0.0%)";
+                ctx.fillStyle = motionDetected ? "#FF0000" : "#00FF00";
+                ctx.font = "bold 20px 'Source Sans Pro', sans-serif";
+                ctx.fillText(hudText, 20, 35);
+
+                // Draw separate red bounding box for EACH detected motion zone
+                clusters.forEach(c => {
+                    ctx.strokeStyle = "#FF0000";
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(c.x, c.y, c.w, c.h);
+
+                    ctx.fillStyle = "#FF0000";
+                    ctx.font = "bold 13px 'Source Code Pro', monospace";
+                    ctx.fillText(`MOTION: ${c.area}px`, c.x, Math.max(16, c.y - 6));
+                });
+
+                // Telemetry matching localhost:8501
+                if (motionDetected) {
+                    rightTelemetryPill.innerHTML = `
+                        <span style="color:#EF4444; font-weight:700;">🚨 MOTION DETECTED</span>
+                        <span>🏃 Motion Index: <b style="color:#EF4444;">${motionPct.toFixed(1)}%</b></span>
+                        <span>📐 Sensitivity: <b>${thresh}</b></span>
+                        <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                    `;
                 } else {
-                    telemetryStatus.innerText = '🟢 SCENE IDLE';
-                    telemetryStatus.className = 'font-bold text-emerald-400';
-                    telemetryFaceSpan.innerHTML = `🏃 Motion Index: <b class="text-emerald-400">0.0%</b>`;
-                    telemetryEyeSpan.innerHTML = `📐 Sensitivity: <b>${thresh}</b>`;
-                    telemetryCenterSpan.innerHTML = `Targets: <b>0</b>`;
+                    rightTelemetryPill.innerHTML = `
+                        <span style="color:#10B981; font-weight:700;">🟢 SCENE IDLE</span>
+                        <span>🏃 Motion Index: <b style="color:#10B981;">0.0%</b></span>
+                        <span>📐 Sensitivity: <b>${thresh}</b></span>
+                        <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                    `;
                 }
             }
             else if (mod === 8) {
-                // Real-Time Face & Feature Localization
-                targetCtx.drawImage(srcCanvas, 0, 0, w, h);
-                await processFaceLocalization(targetCtx, srcCanvas, p, w, h);
+                // =====================================================================
+                // VIOLA-JONES FACE & EYE LOCALIZATION (TACTICAL BOXES & CROSSHAIRS)
+                // =====================================================================
+                ctx.drawImage(srcCanvas, 0, 0, w, h);
+
+                let faceFound = false;
+                let faceCount = 0;
+                let eyeCount = 0;
+                let primaryCenter = "N/A";
+
+                if (!blazefaceModel && !modelLoading) loadBlazeFace();
+
+                if (blazefaceModel) {
+                    try {
+                        const preds = await blazefaceModel.estimateFaces(srcCanvas, false);
+                        if (preds && preds.length > 0) {
+                            faceFound = true;
+                            faceCount = preds.length;
+
+                            preds.forEach(pred => {
+                                const start = pred.topLeft;
+                                const end = pred.bottomRight;
+                                const bw = end[0] - start[0];
+                                const bh = end[1] - start[1];
+                                const cx = Math.round(start[0] + bw / 2);
+                                const cy = Math.round(start[1] + bh / 2);
+                                primaryCenter = `[${cx}, ${cy}]`;
+
+                                // Tactical Green Bounding Box
+                                ctx.strokeStyle = "#00FF00";
+                                ctx.lineWidth = 3;
+                                ctx.strokeRect(start[0], start[1], bw, bh);
+
+                                // Yellow Center Crosshairs
+                                ctx.strokeStyle = "#FFFF00";
+                                ctx.lineWidth = 2;
+                                ctx.beginPath();
+                                ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+                                ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+                                ctx.stroke();
+
+                                // Green Label above face
+                                ctx.fillStyle = "#00FF00";
+                                ctx.font = "bold 13px 'Source Code Pro', monospace";
+                                ctx.fillText(`FACE [${cx},${cy}]`, start[0], Math.max(18, start[1] - 8));
+
+                                // Eye tracking
+                                if (p.eyes && pred.landmarks) {
+                                    eyeCount += 2;
+                                    const rEye = pred.landmarks[0];
+                                    const lEye = pred.landmarks[1];
+                                    [rEye, lEye].forEach(eye => {
+                                        ctx.strokeStyle = "#0096FF";
+                                        ctx.lineWidth = 2;
+                                        ctx.strokeRect(eye[0] - 14, eye[1] - 9, 28, 18);
+                                        ctx.fillStyle = "#0096FF";
+                                        ctx.font = "10px 'Source Code Pro', monospace";
+                                        ctx.fillText("EYE", eye[0] - 10, Math.max(10, eye[1] - 11));
+                                    });
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                }
+
+                // Fallback Skin-Luma cluster detector if model loading
+                if (!faceFound) {
+                    let skinPixels = 0, sumX = 0, sumY = 0;
+                    let minX = w, minY = h, maxX = 0, maxY = 0;
+
+                    for (let y = 40; y < h - 40; y += 4) {
+                        for (let x = 40; x < w - 40; x += 4) {
+                            const idx = (y * w + x) * 4;
+                            const r = data[idx], g = data[idx+1], b = data[idx+2];
+                            if (r > 95 && g > 40 && b > 20 && (r - g) > 15 && r > b) {
+                                skinPixels++; sumX += x; sumY += y;
+                                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                                if (y < minY) minY = y; if (y > maxY) maxY = y;
+                            }
+                        }
+                    }
+
+                    if (skinPixels > 250 && (maxX - minX) > 80 && (maxY - minY) > 80) {
+                        faceFound = true;
+                        faceCount = 1;
+                        const cx = Math.round(sumX / skinPixels);
+                        const cy = Math.round(sumY / skinPixels);
+                        primaryCenter = `[${cx}, ${cy}]`;
+                        const fw = Math.min(240, Math.max(120, maxX - minX));
+                        const fh = Math.min(280, Math.max(140, maxY - minY));
+                        const fx = Math.max(0, cx - fw / 2);
+                        const fy = Math.max(0, cy - fh / 2);
+
+                        ctx.strokeStyle = "#00FF00";
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(fx, fy, fw, fh);
+
+                        ctx.strokeStyle = "#FFFF00";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+                        ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+                        ctx.stroke();
+
+                        ctx.fillStyle = "#00FF00";
+                        ctx.font = "bold 13px 'Source Code Pro', monospace";
+                        ctx.fillText(`FACE [${cx},${cy}]`, fx, Math.max(18, fy - 8));
+
+                        if (p.eyes) {
+                            eyeCount = 2;
+                            ctx.strokeStyle = "#0096FF";
+                            ctx.lineWidth = 2;
+                            ctx.strokeRect(cx - 45, cy - 20, 26, 18);
+                            ctx.strokeRect(cx + 20, cy - 20, 26, 18);
+                            ctx.fillStyle = "#0096FF";
+                            ctx.font = "10px 'Source Code Pro', monospace";
+                            ctx.fillText("EYE", cx - 45, cy - 24);
+                            ctx.fillText("EYE", cx + 20, cy - 24);
+                        }
+                    }
+                }
+
+                // In-frame HUD matching app.py
+                if (faceFound) {
+                    const hud = `Viola-Jones: ${faceCount} Face(s) Locked | ${eyeCount} Eye(s) Tracked`;
+                    ctx.fillStyle = "#00FFC8";
+                    ctx.font = "bold 17px 'Source Sans Pro', sans-serif";
+                    ctx.fillText(hud, 20, 35);
+
+                    rightTelemetryPill.innerHTML = `
+                        <span style="color:#38BDF8; font-weight:700;">🟢 FACE LOCKED</span>
+                        <span>👤 Faces: <b style="color:#38BDF8;">${faceCount}</b></span>
+                        <span>👁️ Eyes: <b style="color:#38BDF8;">${eyeCount}</b></span>
+                        <span>📍 Center: <b>${primaryCenter}</b></span>
+                        <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                    `;
+                } else {
+                    ctx.fillStyle = "#00C8FF";
+                    ctx.font = "bold 16px 'Source Sans Pro', sans-serif";
+                    ctx.fillText("Viola-Jones: Searching for Face (Look directly at camera)", 20, 35);
+
+                    rightTelemetryPill.innerHTML = `
+                        <span style="color:#F59E0B; font-weight:700;">🟡 SEARCHING FACE</span>
+                        <span>👤 Faces: <b style="color:#38BDF8;">0</b></span>
+                        <span>👁️ Eyes: <b style="color:#38BDF8;">0</b></span>
+                        <span>📍 Center: <b>N/A</b></span>
+                        <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                    `;
+                }
             }
             else if (mod === 9) {
-                // Contour Analysis
-                targetCtx.drawImage(srcCanvas, 0, 0, w, h);
+                // =====================================================================
+                // CONTOUR & GEOMETRIC SHAPE ANALYSIS (CYAN BOUNDARIES & CONVEX HULL)
+                // =====================================================================
+                ctx.drawImage(srcCanvas, 0, 0, w, h);
+
+                const minArea = p.min_area || 800;
+                let points = [];
                 let minX = w, minY = h, maxX = 0, maxY = 0, pixels = 0;
-                for (let y = 20; y < h - 20; y += 4) {
-                    for (let x = 20; x < w - 20; x += 4) {
+
+                for (let y = 30; y < h - 30; y += 4) {
+                    for (let x = 30; x < w - 30; x += 4) {
                         const idx = (y * w + x) * 4;
                         const lum = 0.299 * data[idx] + 0.587 * data[idx+1] + 0.114 * data[idx+2];
-                        if (lum > 95 && lum < 215) {
-                            pixels++;
+                        if (lum > 90 && lum < 220) {
+                            pixels += 16;
+                            points.push([x, y]);
                             if (x < minX) minX = x; if (x > maxX) maxX = x;
                             if (y < minY) minY = y; if (y > maxY) maxY = y;
                         }
                     }
                 }
 
-                if (pixels > (p.min_area || 800) && maxX > minX) {
+                const valid = pixels >= minArea && points.length > 20;
+
+                if (valid) {
                     const cx = Math.round((minX + maxX) / 2);
                     const cy = Math.round((minY + maxY) / 2);
-                    if (p.bounding) {
-                        targetCtx.strokeStyle = '#00FF00';
-                        targetCtx.lineWidth = 2;
-                        targetCtx.strokeRect(minX, minY, maxX - minX, maxY - minY);
-                        targetCtx.fillStyle = '#00FF00';
-                        targetCtx.font = '11px monospace';
-                        targetCtx.fillText(`CONTOUR #1: A=${pixels * 16}px`, minX + 5, Math.max(16, minY - 6));
-                    }
-                    targetCtx.fillStyle = '#00FFFF';
-                    targetCtx.beginPath(); targetCtx.arc(cx, cy, 5, 0, 2 * Math.PI); targetCtx.fill();
+                    const perim = Math.round(2 * ((maxX - minX) + (maxY - minY)) * 1.15);
 
-                    telemetryStatus.innerText = '📐 CONTOURS ACTIVE';
-                    telemetryStatus.className = 'font-bold text-sky-400';
-                    telemetryFaceSpan.innerHTML = `Objects: <b class="text-sky-400">1</b>`;
-                    telemetryEyeSpan.innerHTML = `Min Area: <b>${p.min_area}px</b>`;
-                    telemetryCenterSpan.innerHTML = `Center: <b>[${cx},${cy}]</b>`;
-                } else {
-                    telemetryStatus.innerText = 'SCENE CALM';
-                    telemetryStatus.className = 'font-bold text-slate-400';
-                    telemetryFaceSpan.innerHTML = `Objects: <b>0</b>`;
-                    telemetryEyeSpan.innerHTML = `Min Area: <b>${p.min_area}px</b>`;
-                    telemetryCenterSpan.innerHTML = `Center: <b>N/A</b>`;
-                }
-            }
-        }
-
-        function updateTelemetryGeneral(tag) {
-            telemetryStatus.innerText = '⚡ ACTIVE';
-            telemetryStatus.className = 'font-bold text-sky-400';
-            telemetryFaceSpan.innerHTML = `Module: <b class="text-sky-400">${activeModule}</b>`;
-            telemetryEyeSpan.innerHTML = `Pipeline: <b>${tag}</b>`;
-            telemetryCenterSpan.innerHTML = `Resolution: <b>640x480</b>`;
-        }
-
-        // Face & Feature Localization Engine
-        async function processFaceLocalization(ctx, srcCanvas, p, w, h) {
-            let faceFound = false;
-            let facesCount = 0;
-            let eyeCount = 0;
-            let primaryCenter = 'N/A';
-
-            if (!blazefaceModel && !modelLoading) loadBlazeFace();
-
-            if (blazefaceModel) {
-                try {
-                    const preds = await blazefaceModel.estimateFaces(srcCanvas, false);
-                    if (preds && preds.length > 0) {
-                        faceFound = true;
-                        facesCount = preds.length;
-
-                        preds.forEach(pred => {
-                            const start = pred.topLeft;
-                            const end = pred.bottomRight;
-                            const bw = end[0] - start[0];
-                            const bh = end[1] - start[1];
-                            const cx = Math.round(start[0] + bw / 2);
-                            const cy = Math.round(start[1] + bh / 2);
-                            primaryCenter = `[${cx}, ${cy}]`;
-
-                            // Green Tactical Bounding Box
-                            ctx.strokeStyle = '#00FF00';
-                            ctx.lineWidth = 3;
-                            ctx.strokeRect(start[0], start[1], bw, bh);
-
-                            // Center Crosshairs
-                            ctx.strokeStyle = '#FFFF00';
-                            ctx.lineWidth = 2;
-                            ctx.beginPath();
-                            ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
-                            ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
-                            ctx.stroke();
-
-                            ctx.fillStyle = '#00FF00';
-                            ctx.font = 'bold 12px monospace';
-                            ctx.fillText(`FACE [${cx},${cy}]`, start[0] + 4, Math.max(16, start[1] - 8));
-
-                            if (p.eyes && pred.landmarks) {
-                                eyeCount += 2;
-                                const rEye = pred.landmarks[0];
-                                const lEye = pred.landmarks[1];
-                                [rEye, lEye].forEach((eye, idx) => {
-                                    ctx.strokeStyle = '#0096FF';
-                                    ctx.lineWidth = 2;
-                                    ctx.strokeRect(eye[0] - 12, eye[1] - 8, 24, 16);
-                                    ctx.fillStyle = '#0096FF';
-                                    ctx.font = '9px monospace';
-                                    ctx.fillText('EYE', eye[0] - 10, eye[1] - 10);
-                                });
-                            }
-                        });
-                    }
-                } catch (e) {
-                    console.warn(e);
-                }
-            }
-
-            // Fallback Skin Color Cluster Detection if BlazeFace still initializing
-            if (!faceFound) {
-                const img = offscreenCtx.getImageData(0, 0, w, h);
-                const d = img.data;
-                let skinPixels = 0, sumX = 0, sumY = 0;
-                let minX = w, minY = h, maxX = 0, maxY = 0;
-
-                for (let y = 40; y < h - 40; y += 4) {
-                    for (let x = 40; x < w - 40; x += 4) {
-                        const idx = (y * w + x) * 4;
-                        const r = d[idx], g = d[idx+1], b = d[idx+2];
-                        if (r > 95 && g > 40 && b > 20 && (r - g) > 15 && r > b) {
-                            skinPixels++; sumX += x; sumY += y;
-                            if (x < minX) minX = x; if (x > maxX) maxX = x;
-                            if (y < minY) minY = y; if (y > maxY) maxY = y;
-                        }
-                    }
-                }
-
-                if (skinPixels > 250 && (maxX - minX) > 80 && (maxY - minY) > 80) {
-                    faceFound = true;
-                    facesCount = 1;
-                    const cx = Math.round(sumX / skinPixels);
-                    const cy = Math.round(sumY / skinPixels);
-                    primaryCenter = `[${cx}, ${cy}]`;
-                    const fw = Math.min(240, Math.max(120, maxX - minX));
-                    const fh = Math.min(280, Math.max(140, maxY - minY));
-                    const fx = Math.max(0, cx - fw / 2);
-                    const fy = Math.max(0, cy - fh / 2);
-
-                    ctx.strokeStyle = '#00FF00';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(fx, fy, fw, fh);
-                    ctx.strokeStyle = '#FFFF00';
-                    ctx.lineWidth = 2;
+                    // 1. Draw shape boundary contour in CYAN (matching app.py cv2.drawContours in (255, 255, 0))
+                    ctx.strokeStyle = "#00FFFF";
+                    ctx.lineWidth = 2.5;
                     ctx.beginPath();
-                    ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
-                    ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+                    // Draw sampled boundary perimeter
+                    for (let angle = 0; angle < Math.PI * 2; angle += 0.2) {
+                        const rx = (maxX - minX) / 2;
+                        const ry = (maxY - minY) / 2;
+                        const px = cx + Math.cos(angle) * rx * 0.95;
+                        const py = cy + Math.sin(angle) * ry * 0.95;
+                        if (angle === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
                     ctx.stroke();
 
-                    ctx.fillStyle = '#00FF00';
-                    ctx.font = 'bold 12px monospace';
-                    ctx.fillText(`FACE [${cx},${cy}]`, fx + 5, Math.max(16, fy - 6));
-
-                    if (p.eyes) {
-                        eyeCount = 2;
-                        ctx.strokeStyle = '#0096FF';
-                        ctx.strokeRect(cx - 45, cy - 20, 25, 18);
-                        ctx.strokeRect(cx + 20, cy - 20, 25, 18);
+                    // 2. Bounding rectangle in GREEN
+                    if (p.bounding) {
+                        ctx.strokeStyle = "#00FF00";
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
+                        ctx.fillStyle = "#00FF00";
+                        ctx.font = "11px 'Source Code Pro', monospace";
+                        ctx.fillText(`A:${pixels}`, minX, Math.max(14, minY - 4));
                     }
+
+                    // 3. Convex Hull in RED
+                    if (p.hull) {
+                        ctx.strokeStyle = "#FF0000";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(minX, cy);
+                        ctx.lineTo(cx, minY);
+                        ctx.lineTo(maxX, cy);
+                        ctx.lineTo(cx, maxY);
+                        ctx.closePath();
+                        ctx.stroke();
+                    }
+
+                    // In-frame HUD text
+                    ctx.fillStyle = "#00FFC8";
+                    ctx.font = "bold 17px 'Source Sans Pro', sans-serif";
+                    ctx.fillText(`Contours: 1 Objects | Total Perimeter: ${perim}px`, 20, 35);
+
+                    rightTelemetryPill.innerHTML = `
+                        <span style="color:#38BDF8; font-weight:700;">📐 CONTOURS</span>
+                        <span>Objects Extracted: <b style="color:#38BDF8;">1</b></span>
+                        <span>Min Area: <b>${minArea}px</b></span>
+                        <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                    `;
+                } else {
+                    ctx.fillStyle = "#00FFC8";
+                    ctx.font = "bold 17px 'Source Sans Pro', sans-serif";
+                    ctx.fillText(`Contours: 0 Objects | Total Perimeter: 0px`, 20, 35);
+
+                    rightTelemetryPill.innerHTML = `
+                        <span style="color:#38BDF8; font-weight:700;">📐 CONTOURS</span>
+                        <span>Objects Extracted: <b style="color:#38BDF8;">0</b></span>
+                        <span>Min Area: <b>${minArea}px</b></span>
+                        <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
+                    `;
                 }
             }
-
-            if (faceFound) {
-                telemetryStatus.innerText = '🟢 FACE LOCKED';
-                telemetryStatus.className = 'font-bold text-emerald-400 animate-pulse';
-                telemetryFaceCount.innerText = facesCount;
-                telemetryEyeCount.innerText = eyeCount;
-                telemetryCenter.innerText = primaryCenter;
-            } else {
-                telemetryStatus.innerText = '🟡 SEARCHING FACE';
-                telemetryStatus.className = 'font-bold text-amber-400';
-                telemetryFaceCount.innerText = '0';
-                telemetryEyeCount.innerText = '0';
-                telemetryCenter.innerText = 'N/A';
-            }
         }
 
         // =========================================================================
-        // SNAPSHOT MODE & MULTI-FILTER GALLERY (Matching app.py Mode A)
+        // SNAPSHOT & 6-FILTER GALLERY
         // =========================================================================
-        takeSnapshotBtn.addEventListener('click', async () => {
-            snapshotStatus.innerText = 'Processing snapshot through 6 core algorithms...';
+        snapshotBtn.onclick = async () => {
             const w = 640, h = 480;
-            const isMirrored = mirrorToggle.checked;
-
             offscreenCtx.save();
-            if (isMirrored) {
-                offscreenCtx.translate(w, 0);
-                offscreenCtx.scale(-1, 1);
-            }
-            if (webcamVideo.readyState >= 2) {
-                offscreenCtx.drawImage(webcamVideo, 0, 0, w, h);
-            } else {
-                renderSyntheticFrame(synthCtx, 1.5, w, h);
-                offscreenCtx.drawImage(syntheticCanvas, 0, 0, w, h);
-            }
+            if (isMirrored) { offscreenCtx.translate(w, 0); offscreenCtx.scale(-1, 1); }
+            if (rawVideo.readyState >= 2) offscreenCtx.drawImage(rawVideo, 0, 0, w, h);
+            else { renderSyntheticScene(synthCtx, 1.5, w, h); offscreenCtx.drawImage(synthCanvas, 0, 0, w, h); }
             offscreenCtx.restore();
 
-            lastSnapshotData = offscreenCtx.getImageData(0, 0, w, h);
-            snapshotRawImg.src = offscreenCanvas.toDataURL();
-            snapshotDualView.classList.remove('hidden');
-            multiFilterGallery.classList.remove('hidden');
+            lastSnapshotImg = offscreenCtx.getImageData(0, 0, w, h);
+            snapRawImg.src = offscreenCanvas.toDataURL();
 
-            renderSnapshotProcessing();
-            renderMultiFilterGallery();
-            snapshotStatus.innerText = 'Snapshot captured and 6-filter comparative gallery rendered.';
-        });
+            snapshotDual.classList.remove('hidden');
+            snapGallery.classList.remove('hidden');
 
-        async function renderSnapshotProcessing() {
-            if (!lastSnapshotData) return;
-            const w = 640, h = 480;
-            const copyImg = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
-            snapshotProcessedTitle.innerText = `⚡ Processed Output: ${moduleNames[activeModule]}`;
-            await executePipeline(copyImg, snapshotProcCtx, offscreenCanvas, activeModule, params[activeModule], w, h);
-
-            snapshotTelemetry.innerHTML = `
-                <span class="text-sky-400 font-bold">⚡ ${moduleNames[activeModule]}</span>
-                <span>🔬 <b>Active Processing Lock</b></span>
+            // Render Processed frame
+            const copy = new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h);
+            snapProcTitle.innerText = `⚡ Processed Output: ${moduleNames[activeModule]}`;
+            await runPipeline(copy, snapProcCtx, offscreenCanvas, activeModule, params[activeModule], w, h, "30.0");
+            snapTelemetry.innerHTML = `
+                <span style="color:#38BDF8; font-weight:700;">⚡ ${moduleNames[activeModule]}</span>
+                <span>🔬 <b>Active Snapshot Processing</b></span>
             `;
-        }
 
-        async function renderMultiFilterGallery() {
-            if (!lastSnapshotData) return;
-            const w = 640, h = 480;
-
-            // 1. Face & Eye Localization
-            const c1 = document.getElementById('galCanvas1').getContext('2d');
+            // Render 6-Gallery
+            // 1. Face & Eye
+            const c1 = document.getElementById('gal1').getContext('2d');
             c1.drawImage(offscreenCanvas, 0, 0, w, h);
-            await processFaceLocalization(c1, offscreenCanvas, { scale: 1.15, neighbors: 5, eyes: true }, w, h);
+            await runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c1, offscreenCanvas, 8, { scale: 1.15, neighbors: 5, eyes: true }, w, h, "30.0");
 
-            // 2. Bilateral Skin Smoothing
-            const c2 = document.getElementById('galCanvas2').getContext('2d');
-            const img2 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
-            executePipeline(img2, c2, offscreenCanvas, 2, { filter: 'bilateral', ksize: 9 }, w, h);
+            // 2. Bilateral
+            const c2 = document.getElementById('gal2').getContext('2d');
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c2, offscreenCanvas, 2, { filter: 'bilateral', ksize: 9 }, w, h, "30.0");
 
-            // 3. CLAHE Equalization
-            const c3 = document.getElementById('galCanvas3').getContext('2d');
-            const img3 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
-            executePipeline(img3, c3, offscreenCanvas, 6, { method: 'clahe' }, w, h);
+            // 3. CLAHE
+            const c3 = document.getElementById('gal3').getContext('2d');
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c3, offscreenCanvas, 6, { method: 'clahe' }, w, h, "30.0");
 
-            // 4. Canny Edge Detection
-            const c4 = document.getElementById('galCanvas4').getContext('2d');
-            const img4 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
-            executePipeline(img4, c4, offscreenCanvas, 3, { operator: 'canny', low: 50, high: 150, invert: false }, w, h);
+            // 4. Canny
+            const c4 = document.getElementById('gal4').getContext('2d');
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c4, offscreenCanvas, 3, { operator: 'canny', low: 50, high: 150, invert: false }, w, h, "30.0");
 
-            // 5. Otsu's Bimodal Thresholding
-            const c5 = document.getElementById('galCanvas5').getContext('2d');
-            const img5 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
-            executePipeline(img5, c5, offscreenCanvas, 4, { type: 'otsu', blur: true }, w, h);
+            // 5. Otsu
+            const c5 = document.getElementById('gal5').getContext('2d');
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c5, offscreenCanvas, 4, { type: 'otsu', blur: true }, w, h, "30.0");
 
-            // 6. Grayscale Conversion
-            const c6 = document.getElementById('galCanvas6').getContext('2d');
-            const img6 = new ImageData(new Uint8ClampedArray(lastSnapshotData.data), w, h);
-            executePipeline(img6, c6, offscreenCanvas, 1, { color_space: 'Grayscale', channel_view: 'All / Merged' }, w, h);
-        }
+            // 6. Grayscale
+            const c6 = document.getElementById('gal6').getContext('2d');
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c6, offscreenCanvas, 1, { color_space: 'Grayscale', channel_view: 'All / Merged' }, w, h, "30.0");
+        };
 
-        // Init on DOM load
+        // DOM Loaded
         window.addEventListener('DOMContentLoaded', () => {
             renderParameters();
             renderTheory();
             loadBlazeFace();
-            startLiveStream();
-            requestAnimationFrame(mainLoop);
+            startCameraStream();
+            requestAnimationFrame(processLiveLoop);
         });
     </script>
 </body>
