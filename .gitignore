@@ -1,0 +1,32 @@
+# Virtual Environment
+.venv/
+env/
+venv/
+ENV/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*.class
+*.so
+
+# Testing & Coverage
+.coverage
+.pytest_cache/
+htmlcov/
+
+# Local databases & artifacts
+*.db
+*.sqlite3
+guardvision.db
+
+# macOS System Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Vercel
+.vercel/
+
+# Logs
+*.log

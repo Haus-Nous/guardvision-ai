@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GuardVision Lab | Digital Image Processing & Computer Vision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#090D16',
+                        cardBg: '#0F172A',
+                        borderCol: '#1E293B',
+                        accentBlue: '#38BDF8',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .badge { background: #1E293B; color: #38BDF8; font-family: monospace; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; border: 1px solid #334155; }
+        canvas, video { border-radius: 8px; border: 1px solid #1E293B; background: #020617; }
+    </style>
+</head>
+<body class="bg-darkBg text-slate-100 min-h-screen font-sans antialiased">
+
+    <!-- Navbar -->
+    <header class="border-b border-borderCol bg-cardBg/80 backdrop-blur sticky top-0 z-50 px-6 py-3.5 flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <span class="text-2xl">👁️</span>
+            <div>
+                <h1 class="text-lg font-bold text-white tracking-tight">GuardVision Lab</h1>
+                <p class="text-xs text-slate-400">Digital Image Processing (DIP) & Computer Vision (CV) Studio</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-3">
+            <span class="badge">OpenCV 4.14</span>
+            <span class="badge">Python 3.13</span>
+            <span class="badge">Streamlit</span>
+            <a href="https://github.com/Haus-Nous/guardvision-ai" target="_blank" class="bg-sky-500 hover:bg-sky-400 text-slate-900 font-semibold px-3 py-1.5 rounded-md text-xs transition flex items-center space-x-1">
+                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+                <span>GitHub Repo</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-6 py-6 space-y-6">
+
+        <!-- Interactive In-Browser Live CV Demonstration -->
+        <section class="bg-cardBg border border-borderCol rounded-xl p-5 shadow-lg">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-3 border-b border-borderCol">
+                <div>
+                    <h2 class="text-base font-semibold text-white flex items-center gap-2">
+                        <span>⚡</span>
+                        <span>Interactive In-Browser Computer Vision Canvas (Live Demonstration)</span>
+                    </h2>
+                    <p class="text-xs text-slate-400">Captures your laptop webcam and computes spatial 2D convolution gradients & transformations in real time.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="toggleCamBtn" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-1.5 rounded text-xs transition flex items-center space-x-1.5">
+                        <span>▶️</span>
+                        <span id="camBtnText">Start Camera</span>
+                    </button>
+                    <select id="filterSelect" class="bg-slate-900 border border-slate-700 text-sky-400 text-xs rounded px-3 py-1.5 focus:outline-none">
+                        <option value="sobel">Sobel 2D Edge Detection (Gradients)</option>
+                        <option value="gray">Grayscale Luma Matrix (Rec. 601)</option>
+                        <option value="threshold">Binary Image Segmentation (Threshold)</option>
+                        <option value="invert">Inverted Spectral Negative</option>
+                        <option value="blur">Spatial Box Blur (Low-pass Filter)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Video Side-by-Side Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Left: Raw Camera Feed -->
+                <div>
+                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-1.5">
+                        <span>📹 Raw Webcam Ingestion (Your Camera)</span>
+                        <span id="rawStatus" class="text-slate-500 font-mono">Camera Idle</span>
+                    </div>
+                    <div class="relative aspect-[4/3] w-full">
+                        <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                        <div id="placeholderLeft" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 text-xs bg-slate-950/80 rounded-lg">
+                            <span class="text-3xl mb-2">📷</span>
+                            <span>Click 'Start Camera' above to view raw camera</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-400 flex justify-between font-mono">
+                        <span>Source: navigator.mediaDevices</span>
+                        <span>Resolution: 640x480</span>
+                    </div>
+                </div>
+
+                <!-- Right: Processed CV Filter -->
+                <div>
+                    <div class="flex justify-between items-center text-xs font-semibold text-slate-300 mb-1.5">
+                        <span id="processedTitle">⚡ Processed Output: Sobel Gradients</span>
+                        <span id="fpsDisplay" class="text-sky-400 font-mono">0.0 FPS</span>
+                    </div>
+                    <div class="relative aspect-[4/3] w-full">
+                        <canvas id="cvCanvas" width="640" height="480" class="w-full h-full object-cover"></canvas>
+                        <div id="placeholderRight" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 text-xs bg-slate-950/80 rounded-lg">
+                            <span class="text-3xl mb-2">🔬</span>
+                            <span>Real-time processed output will render here</span>
+                        </div>
+                    </div>
+                    <div class="mt-2 bg-slate-900 border border-borderCol rounded px-3 py-1.5 text-xs text-slate-400 flex justify-between font-mono">
+                        <span>Pipeline: Real-Time WebGL/Canvas</span>
+                        <span id="filterTag" class="text-sky-300">Sobel |Gx| + |Gy|</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Python + Streamlit Lab Overview -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="bg-cardBg border border-borderCol rounded-xl p-4">
+                <div class="text-sky-400 text-lg mb-1">🐍 Python + Streamlit Desktop Lab</div>
+                <p class="text-xs text-slate-300 leading-relaxed mb-3">
+                    The full desktop platform features 9 comprehensive laboratory modules built with OpenCV and Streamlit for live professor Q&A.
+                </p>
+                <code class="block bg-slate-950 border border-slate-800 rounded p-2 text-xs font-mono text-emerald-400 mb-2">
+                    streamlit run app.py
+                </code>
+            </div>
+
+            <div class="bg-cardBg border border-borderCol rounded-xl p-4">
+                <div class="text-sky-400 text-lg mb-1">👤 Viola-Jones Face Localization</div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Uses attentional Haar cascades and integral summed-area tables to detect and track human facial boundaries and eye coordinates in real-time.
+                </p>
+            </div>
+
+            <div class="bg-cardBg border border-borderCol rounded-xl p-4">
+                <div class="text-sky-400 text-lg mb-1">🏃 Temporal Frame Differencing</div>
+                <p class="text-xs text-slate-300 leading-relaxed">
+                    Measures temporal pixel delta \(|I_t - I_{t-1}| > 	heta\) to compute scene motion percentage and bounding boxes around moving targets.
+                </p>
+            </div>
+        </section>
+
+        <!-- Academic DIP & CV Formulations -->
+        <section class="bg-cardBg border border-borderCol rounded-xl p-5">
+            <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+                <span>📘</span>
+                <span>Academic Mathematical Foundations</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div class="bg-slate-900/60 border border-slate-800 rounded p-3">
+                    <div class="font-semibold text-sky-300 mb-1">Rec. 601 Grayscale Luma Weighting:</div>
+                    <code class="text-slate-300 font-mono">Y = 0.299·R + 0.587·G + 0.114·B</code>
+                    <p class="text-slate-400 mt-1">Weights reflect human spectral sensitivity peaks in the green wavelength.</p>
+                </div>
+                <div class="bg-slate-900/60 border border-slate-800 rounded p-3">
+                    <div class="font-semibold text-sky-300 mb-1">Canny Gradient Magnitude:</div>
+                    <code class="text-slate-300 font-mono">G = sqrt(Gx² + Gy²), θ = arctan(Gy / Gx)</code>
+                    <p class="text-slate-400 mt-1">Combines non-maximum suppression (NMS) with dual-threshold hysteresis.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Client-Side Video Processing Script -->
+    <script>
+        const video = document.getElementById('webcamVideo');
+        const canvas = document.getElementById('cvCanvas');
+        const ctx = canvas.getContext('2d');
+        const toggleBtn = document.getElementById('toggleCamBtn');
+        const btnText = document.getElementById('camBtnText');
+        const rawStatus = document.getElementById('rawStatus');
+        const filterSelect = document.getElementById('filterSelect');
+        const fpsDisplay = document.getElementById('fpsDisplay');
+        const placeholderLeft = document.getElementById('placeholderLeft');
+        const placeholderRight = document.getElementById('placeholderRight');
+        const filterTag = document.getElementById('filterTag');
+        const processedTitle = document.getElementById('processedTitle');
+
+        let isStreaming = false;
+        let stream = null;
+        let lastFrameTime = performance.now();
+        let frameCount = 0;
+
+        toggleBtn.addEventListener('click', async () => {
+            if (!isStreaming) {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({
+                        video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: 'user' },
+                        audio: false
+                    });
+                    video.srcObject = stream;
+                    await video.play();
+                    isStreaming = true;
+                    btnText.innerText = 'Stop Camera';
+                    toggleBtn.className = 'bg-rose-500 hover:bg-rose-400 text-white font-bold px-4 py-1.5 rounded text-xs transition flex items-center space-x-1.5';
+                    rawStatus.innerText = '● Live Feed';
+                    rawStatus.className = 'text-emerald-400 font-mono';
+                    placeholderLeft.style.display = 'none';
+                    placeholderRight.style.display = 'none';
+                    requestAnimationFrame(renderLoop);
+                } catch (err) {
+                    alert('Camera access denied or unavailable: ' + err.message);
+                }
+            } else {
+                if (stream) {
+                    stream.getTracks().forEach(track => track.stop());
+                }
+                video.srcObject = null;
+                isStreaming = false;
+                btnText.innerText = 'Start Camera';
+                toggleBtn.className = 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-1.5 rounded text-xs transition flex items-center space-x-1.5';
+                rawStatus.innerText = 'Camera Idle';
+                rawStatus.className = 'text-slate-500 font-mono';
+                placeholderLeft.style.display = 'flex';
+                placeholderRight.style.display = 'flex';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+        });
+
+        function renderLoop() {
+            if (!isStreaming) return;
+
+            const now = performance.now();
+            frameCount++;
+            if (now - lastFrameTime >= 1000) {
+                const fps = (frameCount * 1000 / (now - lastFrameTime)).toFixed(1);
+                fpsDisplay.innerText = fps + ' FPS';
+                frameCount = 0;
+                lastFrameTime = now;
+            }
+
+            // Draw raw frame to temp canvas
+            ctx.save();
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = frame.data;
+            const w = canvas.width;
+            const h = canvas.height;
+            const mode = filterSelect.value;
+
+            if (mode === 'gray') {
+                for (let i = 0; i < d.length; i += 4) {
+                    const luma = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                    d[i] = luma;
+                    d[i + 1] = luma;
+                    d[i + 2] = luma;
+                }
+                ctx.putImageData(frame, 0, 0);
+                filterTag.innerText = 'Rec. 601 (0.299R+0.587G+0.114B)';
+                processedTitle.innerText = '⚡ Processed Output: Grayscale Luma';
+            } else if (mode === 'threshold') {
+                for (let i = 0; i < d.length; i += 4) {
+                    const luma = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                    const val = luma > 120 ? 255 : 0;
+                    d[i] = val;
+                    d[i + 1] = val;
+                    d[i + 2] = val;
+                }
+                ctx.putImageData(frame, 0, 0);
+                filterTag.innerText = 'Global Binary Mask (T=120)';
+                processedTitle.innerText = '⚡ Processed Output: Binary Segmentation';
+            } else if (mode === 'invert') {
+                for (let i = 0; i < d.length; i += 4) {
+                    d[i] = 255 - d[i];
+                    d[i + 1] = 255 - d[i + 1];
+                    d[i + 2] = 255 - d[i + 2];
+                }
+                ctx.putImageData(frame, 0, 0);
+                filterTag.innerText = 'Spectral Inversion (255 - I)';
+                processedTitle.innerText = '⚡ Processed Output: Inverted Negative';
+            } else if (mode === 'sobel') {
+                // Compute grayscale buffer first
+                const gray = new Uint8Array(w * h);
+                for (let i = 0, j = 0; i < d.length; i += 4, j++) {
+                    gray[j] = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+                }
+                // Sobel 3x3 kernels
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const idx = y * w + x;
+                        const gx = (-gray[idx - w - 1] + gray[idx - w + 1]) +
+                                   (-2 * gray[idx - 1] + 2 * gray[idx + 1]) +
+                                   (-gray[idx + w - 1] + gray[idx + w + 1]);
+                        const gy = (gray[idx - w - 1] + 2 * gray[idx - w] + gray[idx - w + 1]) -
+                                   (gray[idx + w - 1] + 2 * gray[idx + w] + gray[idx + w + 1]);
+                        const mag = Math.min(255, Math.abs(gx) + Math.abs(gy));
+                        const pIdx = idx * 4;
+                        d[pIdx] = mag;
+                        d[pIdx + 1] = mag;
+                        d[pIdx + 2] = mag;
+                    }
+                }
+                ctx.putImageData(frame, 0, 0);
+                filterTag.innerText = 'Sobel Gradients |Gx| + |Gy|';
+                processedTitle.innerText = '⚡ Processed Output: Sobel Edge Detection';
+            } else if (mode === 'blur') {
+                ctx.filter = 'blur(6px)';
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                ctx.filter = 'none';
+                filterTag.innerText = 'Low-Pass Spatial Gaussian Box Blur';
+                processedTitle.innerText = '⚡ Processed Output: Spatial Smoothing';
+            }
+
+            ctx.restore();
+            requestAnimationFrame(renderLoop);
+        }
+    </script>
+</body>
+</html>
