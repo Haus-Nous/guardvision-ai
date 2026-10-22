@@ -370,14 +370,31 @@
         <main class="flex-1 p-6 lg:p-8 overflow-y-auto space-y-6">
 
             <!-- Streamlit Title & Top Subtitle -->
-            <div class="flex justify-between items-start pb-2 border-b border-stBorder/60">
+            <div class="flex flex-wrap justify-between items-center pb-3 border-b border-stBorder/60 gap-4">
                 <div>
                     <h1 class="text-2xl font-bold text-white tracking-tight">👁️ GuardVision Lab: Side-by-Side DIP & CV Studio</h1>
                     <p class="text-sm text-stSecondary mt-0.5">Live Laptop Webcam Signal Processing Workbench</p>
                 </div>
-                <div class="flex space-x-2">
-                    <span class="text-xs bg-slate-800 border border-slate-700 text-sky-400 px-2 py-0.5 rounded font-mono">OpenCV 4.14</span>
-                    <span class="text-xs bg-slate-800 border border-slate-700 text-purple-400 px-2 py-0.5 rounded font-mono">30 FPS Live Stream</span>
+                <!-- Quick Filter Bar matching the user's initial production deployment -->
+                <div class="flex items-center space-x-2 bg-slate-900 border border-slate-700/80 px-3 py-1.5 rounded-lg shadow-sm">
+                    <span class="text-xs font-semibold text-slate-300 flex items-center gap-1">
+                        <span>🧪</span>
+                        <span class="hidden sm:inline">Active Filter:</span>
+                    </span>
+                    <select id="quickFilterSelect" class="bg-slate-950 border border-slate-700 text-sky-400 text-xs rounded px-2.5 py-1 font-medium focus:outline-none focus:border-stRed">
+                        <option value="face" selected>Viola-Jones Face & Eye Localization (CV)</option>
+                        <option value="gaussian">Gaussian Filter (Spatial Smoothing)</option>
+                        <option value="box">Spatial Box Blur (Low-pass Smoothing)</option>
+                        <option value="bilateral">Bilateral Filter (Skin Smoothing)</option>
+                        <option value="median">Median Blur (Noise Reduction)</option>
+                        <option value="motion">Real-Time Motion Detection (CV)</option>
+                        <option value="contour">Contour & Geometric Shape Analysis (CV)</option>
+                        <option value="canny">Canny Edge Detection (Wireframe)</option>
+                        <option value="sobel">Sobel 2D Edge Detection (Gradients)</option>
+                        <option value="laplacian">Laplacian 2nd Derivative</option>
+                        <option value="gray">Grayscale Luma Matrix (Rec. 601)</option>
+                        <option value="threshold">Binary Image Segmentation (Threshold)</option>
+                    </select>
                 </div>
             </div>
 
@@ -464,14 +481,14 @@
                             <div class="text-[11px] text-stSecondary mt-1">Viola-Jones Bounding Boxes & Crosshairs</div>
                         </div>
                         <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
-                            <div class="text-xs font-bold text-slate-200 mb-1">2. Bilateral Filter</div>
+                            <div class="text-xs font-bold text-slate-200 mb-1">2. Gaussian Filter (Smoothing)</div>
                             <canvas id="gal2" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
-                            <div class="text-[11px] text-stSecondary mt-1">Edge-Preserving Skin Smoothing</div>
+                            <div class="text-[11px] text-stSecondary mt-1">2D Gaussian Convolution (Spatial Smoothing)</div>
                         </div>
                         <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
-                            <div class="text-xs font-bold text-slate-200 mb-1">3. CLAHE Equalization</div>
+                            <div class="text-xs font-bold text-slate-200 mb-1">3. Bilateral Filter</div>
                             <canvas id="gal3" width="640" height="480" class="w-full aspect-[4/3] object-cover rounded border border-stBorder"></canvas>
-                            <div class="text-[11px] text-stSecondary mt-1">Adaptive Local Contrast Enhancement</div>
+                            <div class="text-[11px] text-stSecondary mt-1">Edge-Preserving Skin Smoothing</div>
                         </div>
                         <div class="bg-stMainBg border border-stBorder rounded-lg p-3">
                             <div class="text-xs font-bold text-slate-200 mb-1">4. Canny Edge Detection</div>
@@ -560,6 +577,7 @@
         const streamToggle = document.getElementById('streamToggle');
         const mirrorCheckboxWrapper = document.getElementById('mirrorCheckboxWrapper');
         const moduleSelect = document.getElementById('moduleSelect');
+        const quickFilterSelect = document.getElementById('quickFilterSelect');
         const parameterControls = document.getElementById('parameterControls');
         const theoryContent = document.getElementById('theoryContent');
         const rightHeaderTitle = document.getElementById('rightHeaderTitle');
@@ -643,10 +661,11 @@
                     <div>
                         <div class="text-xs text-stSecondary mb-1.5 font-medium">Filter Type</div>
                         <select id="p_ft" class="st-select">
-                            <option value="gaussian">Gaussian Blur</option>
-                            <option value="median">Median Blur</option>
-                            <option value="bilateral">Bilateral Filter (Edge-Preserving)</option>
-                            <option value="sharpen">Sharpening Kernel</option>
+                            <option value="gaussian">Gaussian Filter (Spatial Smoothing)</option>
+                            <option value="box">Spatial Box Blur (Low-pass Smoothing)</option>
+                            <option value="bilateral">Bilateral Filter (Skin Smoothing)</option>
+                            <option value="median">Median Blur (Noise Reduction)</option>
+                            <option value="sharpen">Sharpening High-pass Kernel</option>
                         </select>
                     </div>
                     <div id="subFilter"></div>
@@ -672,6 +691,15 @@
                         `;
                         document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); document.getElementById('ksizeVal').innerText = e.target.value; };
                         document.getElementById('p_sigma').oninput = (e) => { params[2].sigma = parseFloat(e.target.value); document.getElementById('sigmaVal').innerText = e.target.value; };
+                    } else if (cur === 'box') {
+                        sf.innerHTML = `
+                            <div class="st-slider-container">
+                                <div class="text-xs text-stSecondary mb-1 font-medium">Box Kernel Size (Odd NxN)</div>
+                                <div class="st-slider-val" id="ksizeVal">${params[2].ksize}</div>
+                                <input type="range" id="p_ksize" min="3" max="35" step="2" value="${params[2].ksize}" class="st-slider">
+                            </div>
+                        `;
+                        document.getElementById('p_ksize').oninput = (e) => { params[2].ksize = parseInt(e.target.value); document.getElementById('ksizeVal').innerText = e.target.value; };
                     } else if (cur === 'median') {
                         sf.innerHTML = `
                             <div class="st-slider-container">
@@ -712,6 +740,7 @@
                         `;
                         document.getElementById('p_str').oninput = (e) => { params[2].strength = parseFloat(e.target.value); document.getElementById('strVal').innerText = e.target.value; };
                     }
+                    syncQuickFilterDropdown();
                 }
                 ft.onchange = updateSubFilter;
                 updateSubFilter();
@@ -1026,13 +1055,92 @@
             theoryContent.innerHTML = theories[activeModule] || '';
         }
 
+        function syncQuickFilterDropdown() {
+            if (!quickFilterSelect) return;
+            if (activeModule === 2) {
+                if (params[2].filter === 'gaussian') quickFilterSelect.value = 'gaussian';
+                else if (params[2].filter === 'box') quickFilterSelect.value = 'box';
+                else if (params[2].filter === 'bilateral') quickFilterSelect.value = 'bilateral';
+                else if (params[2].filter === 'median') quickFilterSelect.value = 'median';
+            } else if (activeModule === 3) {
+                if (params[3].operator === 'canny') quickFilterSelect.value = 'canny';
+                else if (params[3].operator === 'sobel') quickFilterSelect.value = 'sobel';
+                else if (params[3].operator === 'laplacian') quickFilterSelect.value = 'laplacian';
+            } else if (activeModule === 1) {
+                quickFilterSelect.value = 'gray';
+            } else if (activeModule === 4) {
+                quickFilterSelect.value = 'threshold';
+            } else if (activeModule === 7) {
+                quickFilterSelect.value = 'motion';
+            } else if (activeModule === 8) {
+                quickFilterSelect.value = 'face';
+            } else if (activeModule === 9) {
+                quickFilterSelect.value = 'contour';
+            }
+        }
+
         // Module selection
         moduleSelect.onchange = (e) => {
             activeModule = parseInt(e.target.value);
             rightHeaderTitle.innerText = `Live Processed Vision: ${moduleNames[activeModule]}`;
             renderParameters();
             renderTheory();
+            syncQuickFilterDropdown();
         };
+
+        if (quickFilterSelect) {
+            quickFilterSelect.onchange = (e) => {
+                const val = e.target.value;
+                if (val === 'gaussian') {
+                    activeModule = 2;
+                    params[2].filter = 'gaussian';
+                    moduleSelect.value = "2";
+                } else if (val === 'box') {
+                    activeModule = 2;
+                    params[2].filter = 'box';
+                    moduleSelect.value = "2";
+                } else if (val === 'bilateral') {
+                    activeModule = 2;
+                    params[2].filter = 'bilateral';
+                    moduleSelect.value = "2";
+                } else if (val === 'median') {
+                    activeModule = 2;
+                    params[2].filter = 'median';
+                    moduleSelect.value = "2";
+                } else if (val === 'canny') {
+                    activeModule = 3;
+                    params[3].operator = 'canny';
+                    moduleSelect.value = "3";
+                } else if (val === 'sobel') {
+                    activeModule = 3;
+                    params[3].operator = 'sobel';
+                    moduleSelect.value = "3";
+                } else if (val === 'laplacian') {
+                    activeModule = 3;
+                    params[3].operator = 'laplacian';
+                    moduleSelect.value = "3";
+                } else if (val === 'gray') {
+                    activeModule = 1;
+                    params[1].color_space = 'Grayscale';
+                    moduleSelect.value = "1";
+                } else if (val === 'threshold') {
+                    activeModule = 4;
+                    moduleSelect.value = "4";
+                } else if (val === 'face') {
+                    activeModule = 8;
+                    moduleSelect.value = "8";
+                } else if (val === 'motion') {
+                    activeModule = 7;
+                    moduleSelect.value = "7";
+                } else if (val === 'contour') {
+                    activeModule = 9;
+                    moduleSelect.value = "9";
+                }
+                rightHeaderTitle.innerText = `Live Processed Vision: ${moduleNames[activeModule]}`;
+                renderParameters();
+                renderTheory();
+            };
+        }
 
         // Radio interactions for ingestion mode
         const radioItems = document.querySelectorAll('#ingestionRadios .st-radio-label');
@@ -1196,6 +1304,174 @@
             ctx.fillText('SYNTHETIC DEMO STREAM (OFFLINE FALLBACK)', 15, 25);
         }
 
+        function applyGaussianBlurFast(src, dst, w, h, ksize, sigma) {
+            if (ksize % 2 === 0) ksize += 1;
+            const radius = Math.floor(ksize / 2);
+            const kernel = new Float32Array(ksize);
+            let sum = 0;
+            const twoSigSq = 2 * sigma * sigma;
+            for (let i = 0; i < ksize; i++) {
+                const x = i - radius;
+                const g = Math.exp(-(x * x) / twoSigSq);
+                kernel[i] = g;
+                sum += g;
+            }
+            for (let i = 0; i < ksize; i++) kernel[i] /= sum;
+
+            const temp = new Float32Array(w * h * 4);
+
+            for (let y = 0; y < h; y++) {
+                const row = y * w;
+                for (let x = 0; x < w; x++) {
+                    let r = 0, g = 0, b = 0;
+                    for (let k = 0; k < ksize; k++) {
+                        let px = x + k - radius;
+                        if (px < 0) px = 0;
+                        else if (px >= w) px = w - 1;
+                        const idx = (row + px) * 4;
+                        const wgt = kernel[k];
+                        r += src[idx] * wgt;
+                        g += src[idx + 1] * wgt;
+                        b += src[idx + 2] * wgt;
+                    }
+                    const out = (row + x) * 4;
+                    temp[out] = r;
+                    temp[out + 1] = g;
+                    temp[out + 2] = b;
+                }
+            }
+
+            for (let x = 0; x < w; x++) {
+                for (let y = 0; y < h; y++) {
+                    let r = 0, g = 0, b = 0;
+                    for (let k = 0; k < ksize; k++) {
+                        let py = y + k - radius;
+                        if (py < 0) py = 0;
+                        else if (py >= h) py = h - 1;
+                        const idx = (py * w + x) * 4;
+                        const wgt = kernel[k];
+                        r += temp[idx] * wgt;
+                        g += temp[idx + 1] * wgt;
+                        b += temp[idx + 2] * wgt;
+                    }
+                    const out = (y * w + x) * 4;
+                    dst[out] = Math.round(r);
+                    dst[out + 1] = Math.round(g);
+                    dst[out + 2] = Math.round(b);
+                    dst[out + 3] = 255;
+                }
+            }
+        }
+
+        function applyBoxBlurFast(src, dst, w, h, ksize) {
+            if (ksize % 2 === 0) ksize += 1;
+            const radius = Math.floor(ksize / 2);
+            const weight = 1.0 / ksize;
+            const temp = new Float32Array(w * h * 4);
+
+            for (let y = 0; y < h; y++) {
+                const row = y * w;
+                for (let x = 0; x < w; x++) {
+                    let r = 0, g = 0, b = 0;
+                    for (let k = -radius; k <= radius; k++) {
+                        let px = x + k;
+                        if (px < 0) px = 0;
+                        else if (px >= w) px = w - 1;
+                        const idx = (row + px) * 4;
+                        r += src[idx];
+                        g += src[idx + 1];
+                        b += src[idx + 2];
+                    }
+                    const out = (row + x) * 4;
+                    temp[out] = r * weight;
+                    temp[out + 1] = g * weight;
+                    temp[out + 2] = b * weight;
+                }
+            }
+
+            for (let x = 0; x < w; x++) {
+                for (let y = 0; y < h; y++) {
+                    let r = 0, g = 0, b = 0;
+                    for (let k = -radius; k <= radius; k++) {
+                        let py = y + k;
+                        if (py < 0) py = 0;
+                        else if (py >= h) py = h - 1;
+                        const idx = (py * w + x) * 4;
+                        r += temp[idx];
+                        g += temp[idx + 1];
+                        b += temp[idx + 2];
+                    }
+                    const out = (y * w + x) * 4;
+                    dst[out] = Math.round(r * weight);
+                    dst[out + 1] = Math.round(g * weight);
+                    dst[out + 2] = Math.round(b * weight);
+                    dst[out + 3] = 255;
+                }
+            }
+        }
+
+        function applyBilateralFilterFast(src, dst, w, h, d, sigmaColor, sigmaSpace) {
+            const radius = Math.min(Math.floor(d / 2), 4);
+            const twoSigCol = 2 * sigmaColor * sigmaColor;
+            const twoSigSp = 2 * sigmaSpace * sigmaSpace;
+
+            for (let y = 0; y < h; y += 2) {
+                for (let x = 0; x < w; x += 2) {
+                    const centerIdx = (y * w + x) * 4;
+                    const cr = src[centerIdx], cg = src[centerIdx + 1], cb = src[centerIdx + 2];
+                    let wr = 0, wg = 0, wb = 0, wSum = 0;
+
+                    for (let ky = -radius; ky <= radius; ky++) {
+                        const py = Math.min(h - 1, Math.max(0, y + ky));
+                        for (let kx = -radius; kx <= radius; kx++) {
+                            const px = Math.min(w - 1, Math.max(0, x + kx));
+                            const idx = (py * w + px) * 4;
+                            const nr = src[idx], ng = src[idx + 1], nb = src[idx + 2];
+                            const distSq = kx * kx + ky * ky;
+                            const cDiffSq = (nr - cr) * (nr - cr) + (ng - cg) * (ng - cg) + (nb - cb) * (nb - cb);
+                            const weight = Math.exp(-distSq / twoSigSp - cDiffSq / twoSigCol);
+                            wr += nr * weight; wg += ng * weight; wb += nb * weight;
+                            wSum += weight;
+                        }
+                    }
+                    const outR = wr / wSum, outG = wg / wSum, outB = wb / wSum;
+                    for (let dy = 0; dy < 2 && y + dy < h; dy++) {
+                        for (let dx = 0; dx < 2 && x + dx < w; dx++) {
+                            const out = ((y + dy) * w + (x + dx)) * 4;
+                            dst[out] = outR; dst[out + 1] = outG; dst[out + 2] = outB; dst[out + 3] = 255;
+                        }
+                    }
+                }
+            }
+        }
+
+        function applyMedianBlurFast(src, dst, w, h, ksize) {
+            const valsR = new Uint8Array(9);
+            const valsG = new Uint8Array(9);
+            const valsB = new Uint8Array(9);
+
+            for (let y = 1; y < h - 1; y++) {
+                for (let x = 1; x < w - 1; x++) {
+                    let n = 0;
+                    for (let ky = -1; ky <= 1; ky++) {
+                        for (let kx = -1; kx <= 1; kx++) {
+                            const idx = ((y + ky) * w + (x + kx)) * 4;
+                            valsR[n] = src[idx];
+                            valsG[n] = src[idx + 1];
+                            valsB[n] = src[idx + 2];
+                            n++;
+                        }
+                    }
+                    valsR.sort(); valsG.sort(); valsB.sort();
+                    const out = (y * w + x) * 4;
+                    dst[out] = valsR[4];
+                    dst[out + 1] = valsG[4];
+                    dst[out + 2] = valsB[4];
+                    dst[out + 3] = 255;
+                }
+            }
+        }
+
         // =========================================================================
         // OPENCV ALGORITHM PIPELINE (Exactly matching localhost:8501)
         // =========================================================================
@@ -1275,28 +1551,17 @@
                             data[o+2] = Math.min(255, Math.max(0, b));
                         }
                     }
+                } else if (ft === 'gaussian') {
+                    const k = Math.min(p.ksize || 11, 29);
+                    const sigma = p.sigma || 2.0;
+                    applyGaussianBlurFast(src, data, w, h, k, sigma);
+                } else if (ft === 'box') {
+                    const k = Math.min(p.ksize || 9, 29);
+                    applyBoxBlurFast(src, data, w, h, k);
+                } else if (ft === 'bilateral') {
+                    applyBilateralFilterFast(src, data, w, h, p.d || 9, p.sigma_color || 75, p.sigma_space || 75);
                 } else {
-                    const k = Math.min(p.ksize || 9, 15);
-                    const half = Math.floor(k / 2);
-                    for (let y = half; y < h - half; y += 2) {
-                        for (let x = half; x < w - half; x += 2) {
-                            let r = 0, g = 0, b = 0, count = 0;
-                            for (let ky = -half; ky <= half; ky += 2) {
-                                for (let kx = -half; kx <= half; kx += 2) {
-                                    const idx = ((y + ky) * w + (x + kx)) * 4;
-                                    r += src[idx]; g += src[idx+1]; b += src[idx+2];
-                                    count++;
-                                }
-                            }
-                            const avgR = r / count, avgG = g / count, avgB = b / count;
-                            for (let dy = 0; dy < 2; dy++) {
-                                for (let dx = 0; dx < 2; dx++) {
-                                    const o = ((y + dy) * w + (x + dx)) * 4;
-                                    data[o] = avgR; data[o+1] = avgG; data[o+2] = avgB;
-                                }
-                            }
-                        }
-                    }
+                    applyMedianBlurFast(src, data, w, h, Math.min(p.ksize || 5, 9));
                 }
                 ctx.putImageData(imgData, 0, 0);
                 rightTelemetryPill.innerHTML = `
@@ -1853,13 +2118,13 @@
             c1.drawImage(offscreenCanvas, 0, 0, w, h);
             await runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c1, offscreenCanvas, 8, { scale: 1.15, neighbors: 5, eyes: true }, w, h, "30.0");
 
-            // 2. Bilateral
+            // 2. Gaussian Filter (Spatial Smoothing)
             const c2 = document.getElementById('gal2').getContext('2d');
-            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c2, offscreenCanvas, 2, { filter: 'bilateral', ksize: 9 }, w, h, "30.0");
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c2, offscreenCanvas, 2, { filter: 'gaussian', ksize: 15, sigma: 3.0 }, w, h, "30.0");
 
-            // 3. CLAHE
+            // 3. Bilateral Filter (Skin Smoothing)
             const c3 = document.getElementById('gal3').getContext('2d');
-            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c3, offscreenCanvas, 6, { method: 'clahe' }, w, h, "30.0");
+            runPipeline(new ImageData(new Uint8ClampedArray(lastSnapshotImg.data), w, h), c3, offscreenCanvas, 2, { filter: 'bilateral', d: 9, sigma_color: 75, sigma_space: 75 }, w, h, "30.0");
 
             // 4. Canny
             const c4 = document.getElementById('gal4').getContext('2d');
