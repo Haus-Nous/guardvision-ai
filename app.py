@@ -1,11 +1,12 @@
 """
 GuardVision Lab: Interactive Digital Image Processing (DIP) & Computer Vision (CV) Platform
 ========================================================================================
-Designed for Live College Professor Presentations and Laboratory Demonstrations.
+Interactive Computer Vision & Digital Image Processing Suite.
 Featuring real-time laptop webcam capture, interactive filter parameter tuning,
 side-by-side comparative views, mathematical formulations, and CV applications.
 """
 
+import os
 import time
 import math
 import cv2
@@ -17,7 +18,7 @@ from PIL import Image
 # Page Configuration & Styling
 # -----------------------------------------------------------------------------
 st.set_page_config(
-    page_title="GuardVision Lab | DIP & CV Presentation",
+    page_title="GuardVision Lab | DIP & CV Studio",
     page_icon="👁️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -74,20 +75,72 @@ st.markdown("""
 # -----------------------------------------------------------------------------
 # Haar Cascades for Face & Eye Detection (Offline & Built-in)
 # -----------------------------------------------------------------------------
+def nms_boxes(boxes, overlap_thresh=0.35):
+    if len(boxes) == 0:
+        return []
+    boxes = np.array(boxes)
+    pick = []
+    x1 = boxes[:, 0]
+    y1 = boxes[:, 1]
+    x2 = boxes[:, 0] + boxes[:, 2]
+    y2 = boxes[:, 1] + boxes[:, 3]
+    area = boxes[:, 2] * boxes[:, 3]
+    idxs = np.argsort(y2)
+
+    while len(idxs) > 0:
+        last = len(idxs) - 1
+        i = idxs[last]
+        pick.append(i)
+
+        xx1 = np.maximum(x1[i], x1[idxs[:last]])
+        yy1 = np.maximum(y1[i], y1[idxs[:last]])
+        xx2 = np.minimum(x2[i], x2[idxs[:last]])
+        yy2 = np.minimum(y2[i], y2[idxs[:last]])
+
+        w = np.maximum(0, xx2 - xx1)
+        h = np.maximum(0, yy2 - yy1)
+        overlap = (w * h) / (area[idxs[:last]] + area[i] - (w * h) + 1e-6)
+
+        idxs = np.delete(idxs, np.concatenate(([last], np.where(overlap > overlap_thresh)[0])))
+
+    return [boxes[i].tolist() for i in pick]
+
 @st.cache_resource
 def load_cascades():
-    try:
-        if hasattr(cv2, 'CascadeClassifier') and hasattr(cv2, 'data') and hasattr(cv2.data, 'haarcascades'):
-            face_path = cv2.data.haarcascades + 'haarcascade_frontalface_default.xml'
-            eye_path = cv2.data.haarcascades + 'haarcascade_eye.xml'
-            face_cascade = cv2.CascadeClassifier(face_path)
-            eye_cascade = cv2.CascadeClassifier(eye_path)
-            return face_cascade, eye_cascade
-    except Exception as e:
-        pass
-    return None, None
+    search_dirs = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "models", "haarcascades"),
+        getattr(getattr(cv2, "data", None), "haarcascades", "")
+    ]
+    face_cascades = []
+    eye_cascades = []
+    
+    if hasattr(cv2, "CascadeClassifier"):
+        for d in search_dirs:
+            if not d or not os.path.isdir(d):
+                continue
+            for face_name in ["haarcascade_frontalface_alt2.xml", "haarcascade_frontalface_default.xml", "haarcascade_profileface.xml"]:
+                fpath = os.path.join(d, face_name)
+                if os.path.exists(fpath):
+                    try:
+                        clf = cv2.CascadeClassifier(fpath)
+                        if not clf.empty():
+                            face_cascades.append(clf)
+                    except Exception:
+                        pass
+            for eye_name in ["haarcascade_eye.xml", "haarcascade_eye_tree_eyeglasses.xml"]:
+                epath = os.path.join(d, eye_name)
+                if os.path.exists(epath):
+                    try:
+                        clf = cv2.CascadeClassifier(epath)
+                        if not clf.empty():
+                            eye_cascades.append(clf)
+                    except Exception:
+                        pass
+            if face_cascades:
+                break
+    return face_cascades, eye_cascades
 
-face_cascade, eye_cascade = load_cascades()
+face_cascades, eye_cascades = load_cascades()
 
 # -----------------------------------------------------------------------------
 # Compact Header Banner
@@ -226,8 +279,8 @@ elif module == "7. Real-Time Motion Detection (CV)":
     params = {"thresh": motion_thresh, "min_area": min_area, "smooth": accumulate_bg}
 
 elif module == "8. Face & Feature Localization (CV)":
-    scale_factor = st.sidebar.slider("Scale Factor (Pyramid Downscale)", min_value=1.05, max_value=1.40, value=1.15, step=0.05)
-    min_neighbors = st.sidebar.slider("Min Neighbors", min_value=2, max_value=10, value=5, step=1)
+    scale_factor = st.sidebar.slider("Scale Factor (Pyramid Downscale)", min_value=1.05, max_value=1.35, value=1.10, step=0.05)
+    min_neighbors = st.sidebar.slider("Min Neighbors (Multi-Face Sensitivity)", min_value=1, max_value=8, value=3, step=1)
     detect_eyes = st.sidebar.checkbox("Also Detect Eyes within Faces", value=True)
     params = {"scale": scale_factor, "neighbors": min_neighbors, "eyes": detect_eyes}
 
@@ -241,7 +294,7 @@ elif module == "9. Contour & Geometric Shape Analysis (CV)":
 # DIP Mathematical Foundations Helper
 # -----------------------------------------------------------------------------
 def render_academic_theory(active_module):
-    with st.expander("📘 DIP & CV Mathematical Foundations & Algorithm Theory (Click to Expand for Professor Q&A)", expanded=False):
+    with st.expander("📘 DIP & CV Mathematical Foundations & Algorithm Theory", expanded=False):
         if active_module.startswith("1."):
             st.markdown(r"""
             **Color Space Transformation Theory:**
@@ -555,49 +608,120 @@ def process_motion(frame, p):
 
 def process_face_localization(frame, p):
     display = frame.copy()
-    if face_cascade is None:
+    if not face_cascades:
         cv2.putText(display, "Haar Cascade Not Available in this OpenCV build", (20, 35),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 165, 255), 2, cv2.LINE_AA)
-        return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), 0, "Haar Cascade Unavailable"
+        return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), 0, "Haar Cascade Unavailable", {"faces": 0, "eye_count": 0, "center": "N/A"}
 
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(
-        gray,
-        scaleFactor=p["scale"],
-        minNeighbors=p["neighbors"],
-        minSize=(40, 40)
-    )
+    equalized = cv2.equalizeHist(gray)
+
+    scale = max(1.05, float(p.get("scale", 1.10)))
+    neighbors = max(2, int(p.get("neighbors", 3)))
+
+    raw_faces = []
+    # Primary & Secondary multi-cascade detection
+    for cascade in face_cascades[:2]:
+        # Query on histogram-equalized image (normalizes lighting across multiple subjects)
+        detected_eq = cascade.detectMultiScale(
+            equalized,
+            scaleFactor=scale,
+            minNeighbors=neighbors,
+            minSize=(30, 30)
+        )
+        if len(detected_eq) > 0:
+            raw_faces.extend(detected_eq.tolist())
+
+        # If less than 2 faces found, also query raw grayscale
+        if len(raw_faces) < 2:
+            detected_raw = cascade.detectMultiScale(
+                gray,
+                scaleFactor=scale,
+                minNeighbors=neighbors,
+                minSize=(30, 30)
+            )
+            if len(detected_raw) > 0:
+                raw_faces.extend(detected_raw.tolist())
+
+    # Check profile cascade if less than 2 faces and a profile classifier is loaded
+    if len(raw_faces) < 2 and len(face_cascades) > 2:
+        detected_prof = face_cascades[2].detectMultiScale(
+            gray,
+            scaleFactor=scale,
+            minNeighbors=neighbors,
+            minSize=(30, 30)
+        )
+        if len(detected_prof) > 0:
+            raw_faces.extend(detected_prof.tolist())
+
+    # Non-Maximum Suppression to deduplicate overlapping detections
+    faces = nms_boxes(raw_faces, overlap_thresh=0.35)
+    # Sort left-to-right across the horizontal axis
+    faces = sorted(faces, key=lambda b: b[0])
 
     eye_count = 0
-    primary_center = "N/A"
-    for (x, y, w, h) in faces:
-        # Tactical face bounding box
-        cv2.rectangle(display, (x, y), (x + w, y + h), (0, 255, 0), 3)
-        # Center crosshairs
+    center_tags = []
+
+    for idx, (x, y, w, h) in enumerate(faces, 1):
         cx, cy = x + w // 2, y + h // 2
-        primary_center = f"[{cx}, {cy}]"
-        cv2.drawMarker(display, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 20, 2)
-        cv2.putText(display, f"FACE [{cx},{cy}]", (x, max(24, y - 8)),
+        center_tags.append(f"#{idx}:[{cx},{cy}]")
+
+        # Tactical bounding box (Green)
+        cv2.rectangle(display, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        # Tactical Corner Accents (Cyan)
+        c_len = max(8, int(min(w, h) * 0.15))
+        # Top-left
+        cv2.line(display, (x, y), (x + c_len, y), (0, 255, 200), 3)
+        cv2.line(display, (x, y), (x, y + c_len), (0, 255, 200), 3)
+        # Top-right
+        cv2.line(display, (x + w, y), (x + w - c_len, y), (0, 255, 200), 3)
+        cv2.line(display, (x + w, y), (x + w, y + c_len), (0, 255, 200), 3)
+        # Bottom-left
+        cv2.line(display, (x, y + h), (x + c_len, y + h), (0, 255, 200), 3)
+        cv2.line(display, (x, y + h), (x, y + h - c_len), (0, 255, 200), 3)
+        # Bottom-right
+        cv2.line(display, (x + w, y + h), (x + w - c_len, y + h), (0, 255, 200), 3)
+        cv2.line(display, (x + w, y + h), (x + w, y + h - c_len), (0, 255, 200), 3)
+
+        # Center Crosshair (Yellow)
+        cv2.drawMarker(display, (cx, cy), (0, 255, 255), cv2.MARKER_CROSS, 16, 2)
+        cv2.putText(display, f"FACE #{idx} [{cx},{cy}]", (x, max(22, y - 8)),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 0), 2, cv2.LINE_AA)
 
-        if p["eyes"] and eye_cascade is not None:
+        # Eye detection within upper 65% of the face ROI
+        if p.get("eyes", True) and eye_cascades:
             roi_gray = gray[y:y+h, x:x+w]
             roi_color = display[y:y+h, x:x+w]
-            eyes = eye_cascade.detectMultiScale(roi_gray, scaleFactor=1.1, minNeighbors=4, minSize=(15, 15))
-            for (ex, ey, ew, eh) in eyes:
-                eye_count += 1
-                cv2.rectangle(roi_color, (ex, ey), (ex + ew, ey + eh), (255, 120, 0), 2)
-                cv2.putText(roi_color, "EYE", (ex, max(14, ey - 4)),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (255, 120, 0), 1, cv2.LINE_AA)
+            eye_roi_gray = roi_gray[0:int(h * 0.65), :]
+            eye_roi_color = roi_color[0:int(h * 0.65), :]
 
-    if len(faces) > 0:
-        label = f"Viola-Jones: {len(faces)} Face(s) Locked | {eye_count} Eye(s) Tracked"
+            raw_eyes = []
+            for ec in eye_cascades[:1]:
+                detected_e = ec.detectMultiScale(eye_roi_gray, scaleFactor=1.1, minNeighbors=3, minSize=(15, 15))
+                if len(detected_e) > 0:
+                    raw_eyes.extend(detected_e.tolist())
+
+            merged_eyes = nms_boxes(raw_eyes, overlap_thresh=0.30)
+            for (ex, ey, ew, eh) in merged_eyes[:2]:  # Up to 2 eyes per face
+                eye_count += 1
+                cv2.rectangle(eye_roi_color, (ex, ey), (ex + ew, ey + eh), (255, 120, 0), 2)
+                cv2.putText(eye_roi_color, "EYE", (ex, max(12, ey - 3)),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.38, (255, 120, 0), 1, cv2.LINE_AA)
+
+    centers_display = " | ".join(center_tags) if center_tags else "N/A"
+
+    if len(faces) >= 2:
+        label = f"Viola-Jones: {len(faces)} Faces Locked (Multi-Subject) | {eye_count} Eye(s) Tracked"
+        cv2.putText(display, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 100), 2, cv2.LINE_AA)
+    elif len(faces) == 1:
+        label = f"Viola-Jones: 1 Face Locked | {eye_count} Eye(s) Tracked"
         cv2.putText(display, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 255, 200), 2, cv2.LINE_AA)
     else:
-        label = "Viola-Jones: Searching for Face (Look directly at camera)"
+        label = "Viola-Jones: Searching for Faces (Look directly at camera)"
         cv2.putText(display, label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 200, 255), 2, cv2.LINE_AA)
-        
-    extra = {"faces": len(faces), "eye_count": eye_count, "center": primary_center}
+
+    extra = {"faces": len(faces), "eye_count": eye_count, "center": centers_display}
     return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), len(faces), label, extra
 
 
@@ -691,14 +815,22 @@ def get_synthetic_frame(t):
     ry = int(h/2 + math.sin(t * 2.5) * 80)
     cv2.rectangle(frame, (rx - 40, ry - 30), (rx + 40, ry + 30), (255, 50, 100), -1)
 
-    # Synthetic Face Landmark
-    fx, fy = int(w * 0.75), int(h * 0.35)
-    cv2.circle(frame, (fx, fy), 45, (220, 200, 180), -1) # Head
-    cv2.circle(frame, (fx - 15, fy - 10), 6, (40, 40, 40), -1) # Eye 1
-    cv2.circle(frame, (fx + 15, fy - 10), 6, (40, 40, 40), -1) # Eye 2
-    cv2.ellipse(frame, (fx, fy + 15), (15, 8), 0, 0, 180, (40, 40, 40), 2) # Mouth
+    # Synthetic Multi-Face Landmarks (Face #1 and Face #2)
+    # Subject 1 (Left)
+    fx1, fy1 = int(w * 0.28), int(h * 0.35)
+    cv2.circle(frame, (fx1, fy1), 45, (220, 200, 180), -1)
+    cv2.circle(frame, (fx1 - 15, fy1 - 10), 6, (40, 40, 40), -1)
+    cv2.circle(frame, (fx1 + 15, fy1 - 10), 6, (40, 40, 40), -1)
+    cv2.ellipse(frame, (fx1, fy1 + 15), (15, 8), 0, 0, 180, (40, 40, 40), 2)
 
-    cv2.putText(frame, "SYNTHETIC DEMO STREAM (OFFLINE FALLBACK)", (15, 30),
+    # Subject 2 (Right)
+    fx2, fy2 = int(w * 0.72), int(h * 0.35)
+    cv2.circle(frame, (fx2, fy2), 45, (215, 195, 175), -1)
+    cv2.circle(frame, (fx2 - 15, fy2 - 10), 6, (40, 40, 40), -1)
+    cv2.circle(frame, (fx2 + 15, fy2 - 10), 6, (40, 40, 40), -1)
+    cv2.ellipse(frame, (fx2, fy2 + 15), (15, 8), 0, 0, 180, (40, 40, 40), 2)
+
+    cv2.putText(frame, "SYNTHETIC DEMO STREAM (MULTI-SUBJECT FALLBACK)", (15, 30),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 255, 200), 1, cv2.LINE_AA)
     return frame
 
@@ -726,7 +858,7 @@ if cam_source.startswith("📸 Browser Camera Snapshot"):
         c1, c2 = st.columns(2, gap="medium")
         with c1:
             st.markdown("##### 📹 Original Snapshot (Your Face)")
-            st.image(rgb_raw, width="stretch")
+            st.image(rgb_raw, use_container_width=True)
             st.markdown(f"""
             <div style="background:#0F172A; border:1px solid #1E293B; border-radius:6px; padding:6px 12px; font-size:0.8rem; color:#94A3B8; display:flex; justify-content:space-between; margin-top:-4px;">
                 <span>🟢 <b>Raw Ingestion Photo</b></span>
@@ -735,10 +867,17 @@ if cam_source.startswith("📸 Browser Camera Snapshot"):
             """, unsafe_allow_html=True)
         with c2:
             st.markdown(f"##### ⚡ Processed Output: {module.split('.')[1].strip()}")
-            st.image(proc_img, caption=tag, width="stretch")
+            st.image(proc_img, caption=tag, use_container_width=True)
             if module.startswith("8."):
-                status_color = "#38BDF8" if metric_val > 0 else "#F59E0B"
-                status_text = "🟢 FACE LOCKED" if metric_val > 0 else "🟡 SEARCHING FACE"
+                if metric_val >= 2:
+                    status_color = "#10B981"
+                    status_text = f"🟢 {metric_val} FACES LOCKED"
+                elif metric_val == 1:
+                    status_color = "#38BDF8"
+                    status_text = "🟢 1 FACE LOCKED"
+                else:
+                    status_color = "#F59E0B"
+                    status_text = "🟡 SEARCHING FACES"
                 st.markdown(f"""
                 <div style="background:#0F172A; border:1px solid #1E293B; border-radius:6px; padding:6px 12px; font-size:0.8rem; color:#E2E8F0; display:flex; justify-content:space-between; margin-top:-4px;">
                     <span style="color:{status_color}; font-weight:700;">{status_text}</span>
@@ -761,36 +900,36 @@ if cam_source.startswith("📸 Browser Camera Snapshot"):
             gcol1, gcol2, gcol3 = st.columns(3)
             with gcol1:
                 # 1. Viola-Jones Face & Eye Localization
-                face_img, _, _, _ = process_face_localization(raw_frame, {"scale": 1.15, "neighbors": 5, "eyes": True})
+                face_img, _, _, _ = process_face_localization(raw_frame, {"scale": 1.10, "neighbors": 3, "eyes": True})
                 st.markdown("**1. Face & Eye Localization**")
-                st.image(face_img, caption="Viola-Jones Bounding Boxes & Crosshairs", width="stretch")
+                st.image(face_img, caption="Viola-Jones Bounding Boxes & Crosshairs", use_container_width=True)
 
                 # 4. Canny Edges
                 canny_img, _ = process_edges(raw_frame, {"operator": "canny", "low": 50, "high": 150, "invert": False})
                 st.markdown("**4. Canny Edge Detection**")
-                st.image(canny_img, caption="Multi-Stage Hysteresis Wireframe", width="stretch")
+                st.image(canny_img, caption="Multi-Stage Hysteresis Wireframe", use_container_width=True)
 
             with gcol2:
                 # 2. Bilateral Skin Smoothing
                 bil_img, _ = process_filtering(raw_frame, {"filter": "bilateral", "d": 9, "sigma_color": 75, "sigma_space": 75})
                 st.markdown("**2. Bilateral Filter**")
-                st.image(bil_img, caption="Edge-Preserving Smoothing (Skin Smooth)", width="stretch")
+                st.image(bil_img, caption="Edge-Preserving Smoothing (Skin Smooth)", use_container_width=True)
 
                 # 5. Otsu Thresholding
                 otsu_img, _ = process_thresholding(raw_frame, {"type": "otsu", "blur": True})
                 st.markdown("**5. Otsu's Bimodal Thresholding**")
-                st.image(otsu_img, caption="Optimal Class Variance Binary Mask", width="stretch")
+                st.image(otsu_img, caption="Optimal Class Variance Binary Mask", use_container_width=True)
 
             with gcol3:
                 # 3. CLAHE Contrast Equalization
                 clahe_img, _ = process_histogram(raw_frame, {"method": "clahe", "clip": 3.0, "grid": 8})
                 st.markdown("**3. CLAHE Equalization**")
-                st.image(clahe_img, caption="Adaptive Local Contrast Enhancement", width="stretch")
+                st.image(clahe_img, caption="Adaptive Local Contrast Enhancement", use_container_width=True)
 
                 # 6. Grayscale Rec. 601
                 gray_img, _ = process_color_space(raw_frame, {"color_space": "Grayscale", "channel_view": "All / Merged"})
                 st.markdown("**6. Grayscale Conversion**")
-                st.image(gray_img, caption="Rec. 601 Luma Weighting (0.299R+0.587G+0.114B)", width="stretch")
+                st.image(gray_img, caption="Rec. 601 Luma Weighting (0.299R+0.587G+0.114B)", use_container_width=True)
 
     else:
         st.write("👉 Look into your camera and press **'Take Photo'** above to begin analysis.")
@@ -852,8 +991,8 @@ else:
             proc_img, metric_val, tag, extra = dispatch_filter(raw_frame, module, params)
 
             # Render side-by-side video frames
-            st_frame_left.image(rgb_raw, width="stretch")
-            st_frame_right.image(proc_img, width="stretch")
+            st_frame_left.image(rgb_raw, use_container_width=True)
+            st_frame_right.image(proc_img, use_container_width=True)
 
             # Telemetry under left camera
             st_left_telemetry.markdown(f"""
@@ -867,8 +1006,15 @@ else:
             # Telemetry under right processed frame
             fps = frame_count / max(0.01, (time.time() - start_time))
             if module.startswith("8."):
-                status_color = "#38BDF8" if metric_val > 0 else "#F59E0B"
-                status_text = "🟢 FACE LOCKED" if metric_val > 0 else "🟡 SEARCHING FACE"
+                if metric_val >= 2:
+                    status_color = "#10B981"
+                    status_text = f"🟢 {metric_val} FACES LOCKED"
+                elif metric_val == 1:
+                    status_color = "#38BDF8"
+                    status_text = "🟢 1 FACE LOCKED"
+                else:
+                    status_color = "#F59E0B"
+                    status_text = "🟡 SEARCHING FACES"
                 st_right_telemetry.markdown(f"""
                 <div style="background:#0F172A; border:1px solid #1E293B; border-radius:6px; padding:6px 12px; font-size:0.8rem; color:#E2E8F0; display:flex; justify-content:space-between; margin-top:-4px;">
                     <span style="color:{status_color}; font-weight:700;">{status_text}</span>
@@ -919,11 +1065,3 @@ else:
 # Collapsible Educational & Mathematical Foundations
 # -----------------------------------------------------------------------------
 render_academic_theory(module)
-
-with st.expander("💡 **How to Demonstrate Facial & Video Processing to Your Professor**", expanded=False):
-    st.markdown("""
-    - **Face Tracking (Module 8)**: As you move your head, notice the green bounding box and yellow crosshair following your facial centroid with exact coordinates.
-    - **Eye Tracking**: Notice the blue boxes over your eyes. Blink or cover an eye to show the eye counter change from 2 to 1.
-    - **Motion Detection (Module 7)**: Wave your hand in front of the camera to see the red motion bounding boxes and motion percentage meter react to temporal frame differencing.
-    - **Edge Detection (Module 3)**: Tune the lower and upper hysteresis sliders in the left sidebar to show how Canny suppresses noise while highlighting facial contours.
-    """)

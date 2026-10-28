@@ -4,7 +4,7 @@
 [![Streamlit: 1.40+](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B.svg)](https://streamlit.io/)
 [![OpenCV: 4.x](https://img.shields.io/badge/OpenCV-4.x-green.svg)](https://opencv.org/)
 
-An interactive, real-time Computer Vision and Digital Image Processing presentation workbench built with **Python, Streamlit, and OpenCV**. Designed specifically for live college demonstrations, laboratory evaluations, and professor presentations using a laptop webcam.
+An interactive, real-time Computer Vision and Digital Image Processing engineering studio built with **Python, Streamlit, and OpenCV**. Featuring live webcam ingestion, dynamic algorithm parameter tuning, side-by-side comparative visualization, mathematical theory, and real-time computer vision analysis.
 
 ---
 
@@ -39,14 +39,14 @@ An interactive, real-time Computer Vision and Digital Image Processing presentat
 - **Real-Time Temporal Motion Detection**:
   - Consecutive frame differencing ($\Delta I_t = |I_t - I_{t-1}| > \theta$) with thresholding, morphological noise suppression, contour grouping, and dynamic green/red bounding boxes.
   - Real-time **"Motion Activity Index (%)"** progress bar and metric.
-- **Object & Face Localization**:
-  - Real-time face and eye detection using OpenCV Haar Cascades with center coordinates and bounding boxes.
+- **Multi-Subject Face & Eye Localization**:
+  - Real-time simultaneous multi-face detection using ensembled Haar Cascades with NMS, histogram equalization, center coordinates, and eye tracking.
 - **Contour Analysis & Geometric Shape Extraction**:
   - Border traversal, area/perimeter computation, bounding rectangle fitting, and convex hull generation.
 
-### 3. Presentation-Ready Features
+### 3. Core Capabilities
 - **Side-by-Side Comparative View**: Displays the live raw webcam feed on the left and the processed DIP filter on the right.
-- **Mathematical Theory Callout Box**: Collapsible presentation panel displaying KaTeX formulas and theoretical explanations for each technique (ideal for answering professor questions).
+- **Mathematical Theory Foundations**: Collapsible panel displaying KaTeX formulas and theoretical explanations for each technique.
 - **Dual Stream Ingestion**: Live laptop webcam (`cv2.VideoCapture(0)`) with automatic fallback to an offline synthetic moving generator if the webcam is blocked or unavailable.
 
 ---
@@ -58,7 +58,7 @@ An interactive, real-time Computer Vision and Digital Image Processing presentat
 Clone or open the project folder in your terminal:
 
 ```bash
-# 1. (Optional) Create and activate a Python virtual environment
+# 1. Create and activate a Python virtual environment
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
@@ -66,9 +66,9 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Launch the Application
+### 2. Launch the Application Locally
 
-Run this single command:
+Run this command:
 
 ```bash
 streamlit run app.py
@@ -76,11 +76,3 @@ streamlit run app.py
 
 The application will immediately launch in your browser at:
 👉 **[http://localhost:8501](http://localhost:8501)**
-
----
-
-## Live Presentation Tips for College Demonstrations
-1. **Side-by-Side Comparison**: Keep the default "Side-by-Side" view active so your professor can immediately appreciate the before/after effect of each filter.
-2. **Interactive Parameter Tuning**: Drag the kernel size or hysteresis sliders in the sidebar while moving in front of the camera to demonstrate real-time responsiveness.
-3. **Motion Detection**: Switch to Module 7 ("Real-Time Motion Detection"), wave your hand, and show how the motion percentage index spikes and creates bounding boxes around your movements.
-4. **Theory Formulation**: Click on the **"📘 DIP & CV Mathematical Foundations"** expander box to display the exact formulas for your current selected module.

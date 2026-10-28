@@ -500,7 +500,7 @@
             <div class="bg-stSidebarBg border border-stBorder rounded-lg overflow-hidden">
                 <details class="cursor-pointer group">
                     <summary class="px-4 py-3 text-sm font-semibold text-slate-200 flex justify-between items-center select-none">
-                        <span>📘 DIP & CV Mathematical Foundations & Algorithm Theory (Click to Expand for Professor Q&A)</span>
+                        <span>📘 DIP & CV Mathematical Foundations & Algorithm Theory</span>
                         <span class="text-stSecondary group-open:rotate-180 transition-transform">▼</span>
                     </summary>
                     <div id="theoryContent" class="px-5 py-4 border-t border-stBorder text-xs text-slate-300 leading-relaxed space-y-2 bg-stMainBg/50">
@@ -508,23 +508,6 @@
                     </div>
                 </details>
             </div>
-
-            <!-- Expander 2: Presentation Tips -->
-            <div class="bg-stSidebarBg border border-stBorder rounded-lg overflow-hidden">
-                <details class="cursor-pointer group">
-                    <summary class="px-4 py-3 text-sm font-semibold text-emerald-400 flex justify-between items-center select-none">
-                        <span>💡 How to Demonstrate Facial & Video Processing to Your Professor</span>
-                        <span class="text-stSecondary group-open:rotate-180 transition-transform">▼</span>
-                    </summary>
-                    <div class="px-5 py-4 border-t border-stBorder text-xs text-slate-300 leading-relaxed space-y-2 bg-stMainBg/50">
-                        <p>• <strong>Face Tracking (Module 8)</strong>: As you move your head, notice the green bounding box and yellow crosshair following your facial centroid with exact coordinates.</p>
-                        <p>• <strong>Eye Tracking</strong>: Notice the blue boxes over your eyes. Blink or cover an eye to show the eye counter change from 2 to 1.</p>
-                        <p>• <strong>Contour Analysis (Module 9)</strong>: Notice how the cyan contour boundary traces the exact physical silhouette of your head, face outline, and clothes.</p>
-                        <p>• <strong>Motion Detection (Module 7)</strong>: Wave your hand in front of the camera to see the red motion bounding boxes and motion percentage meter react to temporal frame differencing.</p>
-                    </div>
-                </details>
-            </div>
-
         </main>
     </div>
 
@@ -1542,10 +1525,10 @@
         async function detectFaceAndEyes(canvas, data, w, h, p) {
             let foundFaces = [];
 
-            // 1. Native Chrome / macOS Vision API (Instant & 100% accurate)
+            // 1. Native Chrome / macOS Vision API (Instant & accurate for multi-face detection)
             if (window.FaceDetector) {
                 if (!window._nativeFaceDetector) {
-                    window._nativeFaceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 2 });
+                    window._nativeFaceDetector = new FaceDetector({ fastMode: true, maxDetectedFaces: 10 });
                 }
                 try {
                     const detected = await window._nativeFaceDetector.detect(canvas);
@@ -1572,8 +1555,8 @@
             if (foundFaces.length === 0 && window.tracking && window.tracking.ObjectTracker) {
                 if (!window._trackingFaceTracker) {
                     window._trackingFaceTracker = new tracking.ObjectTracker(['face']);
-                    window._trackingFaceTracker.setStepSize(1.7);
-                    window._trackingFaceTracker.setScaleFactor(1.15);
+                    window._trackingFaceTracker.setStepSize(1.5);
+                    window._trackingFaceTracker.setScaleFactor(1.1);
                 }
                 try {
                     const trackResults = [];
@@ -1588,31 +1571,44 @@
                 } catch (e) {}
             }
 
-            // 3. Fast Face Salience Fallback (Based on head silhouette & facial feature contrast)
+            // 3. Fast Dual-Subject Salience Fallback (Detects Face 1 & Face 2 across frame halves)
             if (foundFaces.length === 0) {
-                let skinPixels = 0, sumX = 0, sumY = 0;
-                let minX = w, minY = h, maxX = 0, maxY = 0;
-                // Sample face-scale region
-                for (let y = 60; y < h - 80; y += 4) {
-                    for (let x = 80; x < w - 80; x += 4) {
-                        const idx = (y * w + x) * 4;
-                        const r = data[idx], g = data[idx+1], b = data[idx+2];
-                        if (r > 80 && g > 35 && b > 20 && (r - g) > 12 && r > b) {
-                            skinPixels++; sumX += x; sumY += y;
-                            if (x < minX) minX = x; if (x > maxX) maxX = x;
-                            if (y < minY) minY = y; if (y > maxY) maxY = y;
+                function clusterRegion(min_x, max_x) {
+                    let skinPixels = 0, sumX = 0, sumY = 0;
+                    let minX = max_x, minY = h, maxX = min_x, maxY = 0;
+                    for (let y = 60; y < h - 80; y += 4) {
+                        for (let x = min_x; x < max_x; x += 4) {
+                            const idx = (y * w + x) * 4;
+                            const r = data[idx], g = data[idx+1], b = data[idx+2];
+                            if (r > 80 && g > 35 && b > 20 && (r - g) > 12 && r > b) {
+                                skinPixels++; sumX += x; sumY += y;
+                                if (x < minX) minX = x; if (x > maxX) maxX = x;
+                                if (y < minY) minY = y; if (y > maxY) maxY = y;
+                            }
                         }
                     }
+                    if (skinPixels > 150 && (maxX - minX) >= 50 && (maxY - minY) >= 50) {
+                        const cx = Math.round(sumX / skinPixels);
+                        const cy = Math.round(sumY / skinPixels);
+                        const fw = Math.min(260, Math.max(100, Math.round((maxX - minX) * 0.95)));
+                        const fh = Math.min(300, Math.max(120, Math.round(fw * 1.25)));
+                        const fx = Math.max(min_x, Math.min(max_x - fw, cx - Math.round(fw / 2)));
+                        const fy = Math.max(0, Math.min(h - fh, cy - Math.round(fh / 2) - 10));
+                        return { x: fx, y: fy, w: fw, h: fh, eyes: [] };
+                    }
+                    return null;
                 }
 
-                if (skinPixels > 180 && (maxX - minX) >= 60 && (maxY - minY) >= 60) {
-                    const cx = Math.round(sumX / skinPixels);
-                    const cy = Math.round(sumY / skinPixels);
-                    const fw = Math.min(260, Math.max(120, Math.round((maxX - minX) * 0.95)));
-                    const fh = Math.min(300, Math.max(140, Math.round(fw * 1.25)));
-                    const fx = Math.max(0, Math.min(w - fw, cx - Math.round(fw / 2)));
-                    const fy = Math.max(0, Math.min(h - fh, cy - Math.round(fh / 2) - 10));
-                    foundFaces.push({ x: fx, y: fy, w: fw, h: fh, eyes: [] });
+                // Check left half and right half independently
+                const leftFace = clusterRegion(20, Math.round(w * 0.52));
+                const rightFace = clusterRegion(Math.round(w * 0.48), w - 20);
+                if (leftFace) foundFaces.push(leftFace);
+                if (rightFace) foundFaces.push(rightFace);
+
+                // If neither half had sufficient cluster, test centered single subject
+                if (foundFaces.length === 0) {
+                    const centerFace = clusterRegion(50, w - 50);
+                    if (centerFace) foundFaces.push(centerFace);
                 }
             }
 
@@ -1985,97 +1981,98 @@
                 // =====================================================================
                 ctx.drawImage(srcCanvas, 0, 0, w, h);
 
-                const detectedFaces = await detectFaceAndEyes(srcCanvas, data, w, h, p);
+                const rawFaces = await detectFaceAndEyes(srcCanvas, data, w, h, p);
+                const faces = rawFaces.sort((a, b) => a.x - b.x);
 
-                if (detectedFaces.length > 0) {
-                    const raw = detectedFaces[0];
-                    if (!smoothedFace.detected) {
-                        smoothedFace.x = raw.x;
-                        smoothedFace.y = raw.y;
-                        smoothedFace.w = raw.w;
-                        smoothedFace.h = raw.h;
-                        smoothedFace.detected = true;
-                    } else {
-                        // Smooth bounding box (no flickering)
-                        smoothedFace.x = Math.round(smoothedFace.x * 0.65 + raw.x * 0.35);
-                        smoothedFace.y = Math.round(smoothedFace.y * 0.65 + raw.y * 0.35);
-                        smoothedFace.w = Math.round(smoothedFace.w * 0.65 + raw.w * 0.35);
-                        smoothedFace.h = Math.round(smoothedFace.h * 0.65 + raw.h * 0.35);
-                    }
-                    smoothedFace.lastSeen = performance.now();
-                } else {
-                    if (performance.now() - smoothedFace.lastSeen > 800) {
-                        smoothedFace.detected = false;
-                    }
-                }
+                let totalEyes = 0;
+                let centerLabels = [];
 
-                if (smoothedFace.detected) {
-                    const fx = smoothedFace.x;
-                    const fy = smoothedFace.y;
-                    const fw = smoothedFace.w;
-                    const fh = smoothedFace.h;
-                    const cx = Math.round(fx + fw / 2);
-                    const cy = Math.round(fy + fh / 2);
+                if (faces.length > 0) {
+                    faces.forEach((f, idx) => {
+                        const fx = f.x;
+                        const fy = f.y;
+                        const fw = f.w;
+                        const fh = f.h;
+                        const cx = Math.round(fx + fw / 2);
+                        const cy = Math.round(fy + fh / 2);
+                        centerLabels.push(`F${idx + 1}:[${cx},${cy}]`);
 
-                    // 1. Tactical Green Face Bounding Box (Exactly matching media_1792702685571.png)
-                    ctx.strokeStyle = "#00FF00";
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(fx, fy, fw, fh);
+                        // 1. Tactical Green Face Bounding Box
+                        ctx.strokeStyle = "#00FF00";
+                        ctx.lineWidth = 2.5;
+                        ctx.strokeRect(fx, fy, fw, fh);
 
-                    // 2. Yellow Center Crosshairs
-                    ctx.strokeStyle = "#FFFF00";
-                    ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    ctx.moveTo(cx - 12, cy); ctx.lineTo(cx + 12, cy);
-                    ctx.moveTo(cx, cy - 12); ctx.lineTo(cx, cy + 12);
-                    ctx.stroke();
+                        // Corner Accents (Cyan)
+                        const cLen = Math.max(8, Math.round(Math.min(fw, fh) * 0.15));
+                        ctx.strokeStyle = "#00FFC8";
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.moveTo(fx, fy + cLen); ctx.lineTo(fx, fy); ctx.lineTo(fx + cLen, fy);
+                        ctx.moveTo(fx + fw - cLen, fy); ctx.lineTo(fx + fw, fy); ctx.lineTo(fx + fw, fy + cLen);
+                        ctx.moveTo(fx, fy + fh - cLen); ctx.lineTo(fx, fy + fh); ctx.lineTo(fx + cLen, fy + fh);
+                        ctx.moveTo(fx + fw - cLen, fy + fh); ctx.lineTo(fx + fw, fy + fh); ctx.lineTo(fx + fw, fy + fh - cLen);
+                        ctx.stroke();
 
-                    // 3. Green Label above face
-                    ctx.fillStyle = "#00FF00";
-                    ctx.font = "bold 14px 'Source Code Pro', monospace";
-                    ctx.fillText(`FACE [${cx}, ${cy}]`, fx, Math.max(22, fy - 8));
+                        // 2. Yellow Center Crosshairs
+                        ctx.strokeStyle = "#FFFF00";
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(cx - 10, cy); ctx.lineTo(cx + 10, cy);
+                        ctx.moveTo(cx, cy - 10); ctx.lineTo(cx, cy + 10);
+                        ctx.stroke();
 
-                    // 4. Blue Eye Bounding Boxes & EYE label
-                    let eyeCount = 0;
-                    if (p.eyes) {
-                        eyeCount = 2;
-                        const eyeW = Math.round(fw * 0.24);
-                        const eyeH = Math.round(fh * 0.18);
-                        const leftEyeX = Math.round(fx + fw * 0.18);
-                        const rightEyeX = Math.round(fx + fw * 0.58);
-                        const eyeY = Math.round(fy + fh * 0.30);
+                        // 3. Green Label above face
+                        ctx.fillStyle = "#00FF00";
+                        ctx.font = "bold 13px 'Source Code Pro', monospace";
+                        ctx.fillText(`FACE #${idx + 1} [${cx}, ${cy}]`, fx, Math.max(20, fy - 6));
 
-                        [leftEyeX, rightEyeX].forEach(ex => {
-                            ctx.strokeStyle = "#0096FF";
-                            ctx.lineWidth = 2;
-                            ctx.strokeRect(ex, eyeY, eyeW, eyeH);
+                        // 4. Eye Bounding Boxes & EYE label
+                        if (p.eyes) {
+                            const eyeW = Math.round(fw * 0.22);
+                            const eyeH = Math.round(fh * 0.16);
+                            const leftEyeX = Math.round(fx + fw * 0.20);
+                            const rightEyeX = Math.round(fx + fw * 0.58);
+                            const eyeY = Math.round(fy + fh * 0.30);
 
-                            ctx.fillStyle = "#0096FF";
-                            ctx.font = "bold 11px 'Source Code Pro', monospace";
-                            ctx.fillText("EYE", ex, Math.max(12, eyeY - 4));
-                        });
-                    }
+                            [leftEyeX, rightEyeX].forEach(ex => {
+                                totalEyes++;
+                                ctx.strokeStyle = "#0096FF";
+                                ctx.lineWidth = 2;
+                                ctx.strokeRect(ex, eyeY, eyeW, eyeH);
 
-                    // 5. In-frame HUD text (matching media_1792702685571.png)
-                    ctx.fillStyle = "#00FFC8";
-                    ctx.font = "bold 17px 'Source Sans Pro', sans-serif";
-                    ctx.fillText(`Viola-Jones: 1 Face(s) Locked | ${eyeCount} Eye(s) Tracked`, 20, 35);
+                                ctx.fillStyle = "#0096FF";
+                                ctx.font = "bold 10px 'Source Code Pro', monospace";
+                                ctx.fillText("EYE", ex, Math.max(12, eyeY - 3));
+                            });
+                        }
+                    });
 
-                    // 6. Telemetry Pill (Exact match for localhost:8501)
+                    // 5. In-frame HUD text
+                    const hudColor = faces.length >= 2 ? "#00FF64" : "#00FFC8";
+                    const hudText = faces.length >= 2 
+                        ? `Viola-Jones: ${faces.length} Faces Locked (Multi-Subject) | ${totalEyes} Eye(s) Tracked`
+                        : `Viola-Jones: 1 Face Locked | ${totalEyes} Eye(s) Tracked`;
+                    ctx.fillStyle = hudColor;
+                    ctx.font = "bold 16px 'Source Sans Pro', sans-serif";
+                    ctx.fillText(hudText, 20, 35);
+
+                    // 6. Telemetry Pill
+                    const statusText = faces.length >= 2 ? `🟢 ${faces.length} FACES LOCKED` : "🟢 1 FACE LOCKED";
+                    const statusColor = faces.length >= 2 ? "#10B981" : "#38BDF8";
                     rightTelemetryPill.innerHTML = `
-                        <span style="color:#10B981; font-weight:700;">🟢 FACE LOCKED</span>
-                        <span>👤 Faces: <b style="color:#38BDF8;">1</b></span>
-                        <span>👁️ Eyes: <b style="color:#38BDF8;">${eyeCount}</b></span>
-                        <span>📍 Center: <b>[${cx}, ${cy}]</b></span>
+                        <span style="color:${statusColor}; font-weight:700;">${statusText}</span>
+                        <span>👤 Faces: <b style="color:#38BDF8;">${faces.length}</b></span>
+                        <span>👁️ Eyes: <b style="color:#38BDF8;">${totalEyes}</b></span>
+                        <span>📍 Center: <b>${centerLabels.join(' | ')}</b></span>
                         <span style="color:#A78BFA; font-family:monospace;">⚡ ${curFps} FPS</span>
                     `;
                 } else {
                     ctx.fillStyle = "#00C8FF";
                     ctx.font = "bold 16px 'Source Sans Pro', sans-serif";
-                    ctx.fillText("Viola-Jones: Searching for Face (Look directly at camera)", 20, 35);
+                    ctx.fillText("Viola-Jones: Searching for Faces (Look directly at camera)", 20, 35);
 
                     rightTelemetryPill.innerHTML = `
-                        <span style="color:#F59E0B; font-weight:700;">🟡 SEARCHING FACE</span>
+                        <span style="color:#F59E0B; font-weight:700;">🟡 SEARCHING FACES</span>
                         <span>👤 Faces: <b style="color:#38BDF8;">0</b></span>
                         <span>👁️ Eyes: <b style="color:#38BDF8;">0</b></span>
                         <span>📍 Center: <b>N/A</b></span>
