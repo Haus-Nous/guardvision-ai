@@ -8,6 +8,82 @@ An interactive, real-time Computer Vision and Digital Image Processing engineeri
 
 ---
 
+## System Architecture & Pipeline Flowchart
+
+Use this diagram to trace the complete end-to-end dataflow from raw physical sensor input through mathematical transformations to real-time visualization:
+
+```mermaid
+flowchart TD
+    %% STAGE 1: INGESTION
+    subgraph S1 ["Stage 1: Hardware Ingestion & Normalization"]
+        direction TB
+        CAM["Live Hardware Camera (cv2.VideoCapture)"] --> FRAME["Raw Sensor Frame (H x W x 3)"]
+        SNAP["Browser Snapshot (HTML5 Camera Input)"] --> FRAME
+        SYNTH["Synthetic Moving Fallback Generator"] -.->|Auto-Fallback| FRAME
+        FRAME --> RESIZE["Standardize Resolution to 640 x 480"]
+        RESIZE --> FLIP["Mirror View (Horizontal Flip: cv2.flip)"]
+        FLIP --> SWAP["Color Transposition: BGR to RGB (cv2.cvtColor)"]
+    end
+
+    %% STAGE 2: CONTROL & DISPATCH
+    subgraph S2 ["Stage 2: Dynamic Control & Dispatch Engine"]
+        direction TB
+        SIDEBAR["Sidebar Controls (Kernel, Sigma, Threshold Sliders)"] --> PARAMS["Runtime Parameters Dict (p)"]
+        MODELS["Offline XML Trees (models/haarcascades/)"] --> CACHE["Cached Resource (@st.cache_resource)"]
+        SWAP --> DISPATCH["Central Dispatcher: dispatch_filter(frame, module, params)"]
+        PARAMS --> DISPATCH
+        CACHE --> DISPATCH
+    end
+
+    %% STAGE 3: MATHEMATICAL PIPELINE BRANCHING
+    subgraph S3 ["Stage 3: Algorithmic Transformation Pipelines"]
+        direction TB
+        DISPATCH --> DIP["Branch A: DIP Mathematical Foundations"]
+        DISPATCH --> CV["Branch B: Real-Time Computer Vision"]
+
+        %% DIP Modules
+        subgraph S3_DIP ["DIP Modules (Modules 1 - 6)"]
+            direction TB
+            DIP --> M1["Color Spaces: Rec. 601 Grayscale, HSV Decoupling, CIELAB"]
+            DIP --> M2["Spatial 2D Filters: Separable Gaussian O(2K), Median, Bilateral"]
+            DIP --> M3["Edge Operators: Canny 5-Stage Hysteresis, Sobel, Laplacian"]
+            DIP --> M4["Segmentation: Global Cutoff, Otsu Variance σ_B², Adaptive Gaussian"]
+            DIP --> M5["Morphology: Erosion ⊖, Dilation ⊕, Opening, Closing, Gradient"]
+            DIP --> M6["Contrast: Global HE (CDF Transfer), CLAHE (Tile Clipping)"]
+        end
+
+        %% CV Modules
+        subgraph S3_CV ["CV Applications (Modules 7 - 9)"]
+            direction TB
+            CV --> M7["Motion Detection: Running Background Model B_t = (1-α)B_t-1 + αI_t"]
+            CV --> M8["Multi-Face & Eye: Viola-Jones + EqualizeHist + Ensemble + NMS (IoU=0.35)"]
+            CV --> M9["Contour Geometry: Suzuki-Abe Border Following + Moments (x̄, ȳ) + Convex Hull"]
+        end
+    end
+
+    %% STAGE 4: PRESENTATION & TELEMETRY
+    subgraph S4 ["Stage 4: Synchronous Presentation & Telemetry HUD"]
+        direction TB
+        S3_DIP --> RENDER["Dual Viewport Synchronous Renderer (30 FPS)"]
+        S3_CV --> RENDER
+        RENDER --> RAW_FEED["Left Viewport: Raw Ingested Camera Input"]
+        RENDER --> PROC_FEED["Right Viewport: Live Processed Algorithm Output"]
+        RENDER --> HUD["Telemetry HUD: Real-Time FPS, Centroids, Face Count, Motion Index %"]
+        RENDER --> GALLERY["Multi-Filter Gallery: 6 Core Algorithms Applied Simultaneously"]
+    end
+```
+
+### How to Explain This Flowchart to Your Professor (60-Second Walkthrough)
+
+1. **Point to Stage 1 (Top):** *"Professor, our pipeline starts with frame ingestion. Regardless of whether frames come from a live hardware camera or browser snapshot, we normalize the resolution to $640 \times 480$, apply a mirror flip for natural user interaction, and transpose the memory layout from OpenCV's native BGR to sRGB."*
+2. **Point to Stage 2 (Middle-Left):** *"Next, the frame enters our central `dispatch_filter()` engine, which couples the incoming image with runtime parameters dynamically tuned via the sidebar sliders (like Gaussian kernel size or Canny thresholds) and pre-cached Haar feature trees."*
+3. **Point to Stage 3 (Middle):** *"The engine routes the frame into one of two algorithmic branches:  
+   - **Branch A (DIP Foundations):** Evaluates mathematical transformations (Rec. 601 Luma, separable Gaussian convolution, Canny 5-stage hysteresis, Otsu variance maximization, morphology, and CLAHE).  
+   - **Branch B (Computer Vision):** Executes higher-level perception—temporal motion detection using a running background model, multi-subject face and eye localization using Viola-Jones with NMS deduplication, and contour boundary extraction with spatial image moments."*
+4. **Point to Stage 4 (Bottom):** *"Finally, both the raw camera feed and the processed output are rendered side-by-side at 30 FPS alongside live telemetry showing FPS, centroids, and detection metrics."*
+
+---
+
 ## Key Features & Demonstration Modules
 
 ### 1. Digital Image Processing (DIP) Fundamentals
