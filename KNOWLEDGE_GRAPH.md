@@ -94,13 +94,25 @@ graph TD
         M9 --> M9_HULL["Convex Hull Generation: Sklansky / Monotone Chain O(N log N)"]
     end
 
+    %% LEVEL 3: DEEP LEARNING NEURAL PERCEPTION
+    subgraph DL ["5. DEEP LEARNING NEURAL PERCEPTION"]
+        DISPATCH --> M10["Module 10: Deep Learning Object Detection"]
+        M10 --> M10_BACKBONE["CSPDarknet / C2f Backbone: Multi-scale Spatial Features P3, P4, P5"]
+        M10 --> M10_NECK["PANet Path Aggregation Neck: Top-down & Bottom-up Feature Fusion"]
+        M10 --> M10_HEAD["Anchor-Free Decoupled Head: Independent Box & Class Branches"]
+        M10 --> M10_LOSS["Multi-Task Loss: Complete IoU (CIoU) + DFL + BCE"]
+        M10 --> M10_ACCEL["Hardware Acceleration: Apple Metal MPS GPU / CUDA / Host CPU"]
+        M10 --> M10_FILTER["Target Filtering: 80 COCO Classes, People, Vehicles, Electronics"]
+    end
+
     %% PRESENTATION & HUD LAYER
-    subgraph OUTPUT ["5. SYNCHRONOUS PRESENTATION & TELEMETRY LAYER"]
+    subgraph OUTPUT ["6. SYNCHRONOUS PRESENTATION & TELEMETRY LAYER"]
         DIP --> RENDER["Synchronous Dual Viewport Layout"]
         CV --> RENDER
+        DL --> RENDER
         RENDER --> OUT_LEFT["Left Viewport: Raw Ingested Camera Feed"]
         RENDER --> OUT_RIGHT["Right Viewport: Processed Computer Vision Filter"]
-        RENDER --> TELEMETRY["Live Telemetry HUD: FPS, Centroids, Face Count, Motion Index"]
+        RENDER --> TELEMETRY["Live Telemetry HUD: FPS, Latency ms, Centroids, Face Count, Object Breakdown"]
         RENDER --> THEORY["Collapsible Mathematical Foundations (KaTeX Formulations)"]
         RENDER --> GALLERY["Multi-Filter Comparison Gallery (6 Simultaneous Algorithms)"]
     end
@@ -110,6 +122,7 @@ graph TD
     classDef engineNode fill:#0F172A,stroke:#6366F1,stroke-width:2px,color:#F8FAFC;
     classDef dipNode fill:#1E293B,stroke:#10B981,stroke-width:2px,color:#F8FAFC;
     classDef cvNode fill:#1E293B,stroke:#F59E0B,stroke-width:2px,color:#F8FAFC;
+    classDef dlNode fill:#1E293B,stroke:#A855F7,stroke-width:2px,color:#F8FAFC;
     classDef outNode fill:#0F172A,stroke:#EC4899,stroke-width:2px,color:#F8FAFC;
 
     class CAM,SNAP,FALLBACK,RAW,RESIZE,FLIP,COLOR_SWAP inputNode;
@@ -202,9 +215,34 @@ Computer Vision Applications
 
 ---
 
+### Layer 4: Deep Learning Neural Perception (Module 10)
+
+```
+Deep Learning Neural Perception
+ └── Module 10: Single-Stage Object Detection (YOLO / PyTorch)
+      ├── Model Architecture:
+      │    ├── Backbone: CSPDarknet / C2f (Cross-Stage Partial Bottlenecks)
+      │    ├── Neck: PANet (Path Aggregation Network for multi-scale semantic fusion P3, P4, P5)
+      │    └── Head: Anchor-Free Decoupled Head (Separate Regression & Classification branches)
+      ├── Loss Formulation:
+      │    ├── Complete IoU (CIoU): Penalizes aspect ratio & Euclidean center deviation
+      │    ├── Distribution Focal Loss (DFL): Models continuous bounding box coordinate distributions
+      │    └── Binary Cross-Entropy (BCE): Multi-label class classification loss
+      ├── Acceleration & Runtime:
+      │    ├── Apple Silicon Metal GPU (MPS): Native ~13ms tensor latency
+      │    ├── NVIDIA CUDA / Host CPU fallback
+      │    └── Cached Resource: @st.cache_resource model weights persistence
+      └── Post-Processing:
+           ├── Class Confidence Filtering: Threshold θ_conf (0.10 - 0.95)
+           ├── Non-Maximum Suppression (NMS): IoU Threshold θ_iou (0.10 - 0.85)
+           └── Tactical Telemetry: Latency (ms), FPS, and Category breakdown
+```
+
+---
+
 ## 3. How to Present This Knowledge Graph to Your Professor (3-Minute Script)
 
-When your professor asks you to give an overview of the system, open this file or draw this 4-tier flow:
+When your professor asks you to give an overview of the system, open this file or draw this 5-tier flow:
 
 1. **Tier 1 (Signal Ingestion):**
    > *"Professor, the bottom of our graph starts with raw physical photons arriving at the camera sensor. OpenCV captures this in BGR format at $640 \times 480$. We standardize resolution, flip horizontally for natural user interaction, and transpose color channels to standard sRGB."*
@@ -212,11 +250,14 @@ When your professor asks you to give an overview of the system, open this file o
 2. **Tier 2 (DIP Mathematical Foundations):**
    > *"The ingested signal enters our central dispatch engine. Here, the student can explore 6 low-level signal processing domains: Photometric Color Spaces (Rec. 601 Luma, HSV, CIELAB), 2D Spatial Convolutions (Separable Gaussian, Median, and Bilateral edge-preserving filtering), Differential Edge Operators (Canny and Sobel), Image Segmentation (Otsu variance maximization and Adaptive Gaussian), Mathematical Morphology, and Contrast Equalization (CLAHE)."*
 
-3. **Tier 3 (High-Level Computer Vision Applications):**
-   > *"Building upon those fundamental DIP primitives, we have 3 real-time computer vision applications:
+3. **Tier 3 (Classical Computer Vision Applications):**
+   > *"Building upon those fundamental DIP primitives, we have 3 classical computer vision applications:
    > 1. **Temporal Motion Detection**, which uses an adaptive running background average model $B_t = (1-\alpha)B_{t-1} + \alpha I_t$.
    > 2. **Multi-Subject Face Localization**, which leverages the Viola-Jones framework with an Integral Image for $\mathcal{O}(1)$ rectangular sums, AdaBoost cascade filtering, contrast equalization, an ensemble of classifiers, and custom Non-Maximum Suppression (NMS) to track multiple subjects simultaneously.
    > 3. **Contour Geometry**, which applies Suzuki-Abe topological border tracing, image moments for centroid calculation, and convex hull generation."*
 
-4. **Tier 4 (Presentation & Telemetry Layer):**
-   > *"Finally, everything is output synchronously side-by-side with live telemetry displaying FPS, centroids, face counts, and motion percentages."*
+4. **Tier 4 (Modern Deep Learning Neural Perception):**
+   > *"To contrast classical handcrafted heuristics against state-of-the-art AI, we integrated **Module 10: Deep Learning Object Detection (YOLO / PyTorch)**. Rather than relying on rigid rectangular Haar features, YOLO uses a deep convolutional backbone (CSPDarknet/C2f) and an anchor-free decoupled head with multi-task loss (CIoU + DFL + BCE). Accelerated via Apple Silicon Metal (MPS GPU), it delivers real-time inference in approximately $13\text{ ms}$ (~70 FPS), detecting 80 object classes under arbitrary poses and partial occlusions."*
+
+5. **Tier 5 (Presentation & Telemetry Layer):**
+   > *"Finally, everything is output synchronously side-by-side with live telemetry displaying FPS, tensor inference latency in ms, centroids, face counts, and detected object breakdowns."*

@@ -143,6 +143,37 @@ def load_cascades():
 face_cascades, eye_cascades = load_cascades()
 
 # -----------------------------------------------------------------------------
+# Deep Learning Models (PyTorch & Ultralytics YOLO)
+# -----------------------------------------------------------------------------
+try:
+    import torch
+    from ultralytics import YOLO
+    DL_AVAILABLE = True
+except Exception:
+    DL_AVAILABLE = False
+
+@st.cache_resource
+def load_deep_learning_model(model_variant="yolov8n.pt"):
+    if not DL_AVAILABLE:
+        return None, "unavailable", "CPU"
+    try:
+        # Determine acceleration device (Apple Silicon Metal MPS, NVIDIA CUDA, or CPU)
+        if torch.backends.mps.is_available():
+            device_str = "mps"
+            display_device = "Apple Metal (MPS GPU)"
+        elif torch.cuda.is_available():
+            device_str = "cuda"
+            display_device = f"NVIDIA CUDA ({torch.cuda.get_device_name(0)})"
+        else:
+            device_str = "cpu"
+            display_device = "Host CPU"
+
+        model = YOLO(model_variant)
+        return model, device_str, display_device
+    except Exception as e:
+        return None, str(e), "Unavailable"
+
+# -----------------------------------------------------------------------------
 # Compact Header Banner
 # -----------------------------------------------------------------------------
 st.markdown("""
@@ -192,7 +223,8 @@ module = st.sidebar.selectbox(
         "6. Histogram Equalization & Contrast",
         "7. Real-Time Motion Detection (CV)",
         "8. Face & Feature Localization (CV)",
-        "9. Contour & Geometric Shape Analysis (CV)"
+        "9. Contour & Geometric Shape Analysis (CV)",
+        "10. Deep Learning Object Detection (YOLO / PyTorch)"
     ],
     index=7  # Default to Face & Feature Localization so users immediately see their face tracked!
 )
@@ -290,6 +322,27 @@ elif module == "9. Contour & Geometric Shape Analysis (CV)":
     draw_convex_hull = st.sidebar.checkbox("Draw Convex Hulls", value=False)
     params = {"min_area": min_contour_area, "bounding": draw_bounding, "hull": draw_convex_hull}
 
+elif module.startswith("10."):
+    model_choice = st.sidebar.selectbox(
+        "Pre-trained Model Architecture",
+        ["yolov8n.pt (Nano - Realtime CPU)", "yolov8s.pt (Small - High Recall)", "yolo11n.pt (YOLO11 Nano - Next Gen)"],
+        index=0
+    )
+    conf_thresh = st.sidebar.slider("Confidence Cutoff Threshold", min_value=0.10, max_value=0.95, value=0.35, step=0.05)
+    iou_thresh = st.sidebar.slider("IoU / NMS Suppression Threshold", min_value=0.10, max_value=0.85, value=0.45, step=0.05)
+    target_filter = st.sidebar.selectbox(
+        "Target Class Filter",
+        ["All 80 COCO Classes", "People & Faces Only (person)", "Vehicles & Transport", "Handheld Devices & Electronics"]
+    )
+    draw_conf_labels = st.sidebar.checkbox("Render Class Name & Confidence Score", value=True)
+    params = {
+        "model_variant": model_choice.split()[0],
+        "conf": conf_thresh,
+        "iou": iou_thresh,
+        "filter": target_filter,
+        "show_labels": draw_conf_labels
+    }
+
 # -----------------------------------------------------------------------------
 # DIP Mathematical Foundations Helper
 # -----------------------------------------------------------------------------
@@ -364,11 +417,28 @@ def render_academic_theory(active_module):
             - AdaBoost selects a subset of critical discriminative features out of $160,000+$ candidates.
             - Attentional cascade organizes classifiers in stages: early stages quickly reject non-face subwindows with negligible computational cost.
             """)
-        else:
+        elif active_module.startswith("9."):
             st.markdown(r"""
             **Contour Analysis & Boundary Traversal:**
             - Suzuki's border following algorithm identifies topological boundaries of connected components.
             - Computes geometric spatial moments $m_{pq} = \sum_x \sum_y x^p y^q I(x,y)$ to extract centroid $(\bar{x}, \bar{y})$ and orientation.
+            """)
+        elif active_module.startswith("10."):
+            st.markdown(r"""
+            **Deep Learning Object Detection (YOLO / PyTorch Architecture):**
+            - **End-to-End Single-Stage Detection:** Unlike sliding-window Viola-Jones, YOLO frames detection as a spatial regression problem, predicting bounding boxes and class probabilities directly from full feature maps in a single feed-forward tensor evaluation pass.
+            - **Backbone & Feature Aggregation (CSPDarknet & C2f / PANet):** Uses cross-stage partial connections with depthwise convolutions to extract multi-scale spatial semantic features ($P_3, P_4, P_5$) resilient to illumination, pose, and perspective distortions.
+            - **Anchor-Free Decoupled Head:** Separates classification ($p_k$) and bounding box coordinates ($b_x, b_y, b_w, b_h$) into independent branches, eliminating rigid anchor priors.
+            - **Multi-Task Loss Formulation:**
+              $$\mathcal{L}_{\text{total}} = \lambda_{\text{box}} \mathcal{L}_{\text{CIoU}} + \lambda_{\text{dfl}} \mathcal{L}_{\text{DFL}} + \lambda_{\text{cls}} \mathcal{L}_{\text{BCE}}$$
+              where Complete IoU ($\mathcal{L}_{\text{CIoU}}$) enforces aspect ratio and Euclidean center alignment, and Distribution Focal Loss ($\mathcal{L}_{\text{DFL}}$) optimizes continuous bounding box coordinate distributions.
+            - **Classical Viola-Jones vs. Deep Learning Comparison:**
+              - *Viola-Jones:* Hand-engineered rectangular Haar intensity gradients, CPU-bound cascade, strictly rigid upright frontal faces, sensitive to occlusions.
+              - *YOLO Neural Network:* Deep learned convolutional representations, GPU/MPS hardware accelerated, detects 80 distinct classes under extreme poses, partial occlusions, and diverse lighting.
+            """)
+        else:
+            st.markdown(r"""
+            **Unified Computer Vision Workbench:** Select a laboratory module from the sidebar to inspect its underlying mathematical formulation and algorithmic pipeline.
             """)
 
 # -----------------------------------------------------------------------------
@@ -760,6 +830,135 @@ def process_contours(frame, p):
     return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), valid_count, label
 
 
+def process_deep_learning(frame, p):
+    display = frame.copy()
+    if not DL_AVAILABLE:
+        cv2.putText(display, "PyTorch / Ultralytics not installed", (20, 35),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2, cv2.LINE_AA)
+        return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), 0, "Deep Learning Engine Unavailable", {
+            "latency_ms": 0.0, "device": "Unavailable", "model_variant": p.get("model_variant", "yolov8n.pt"),
+            "class_counts": {}, "avg_conf": 0.0, "max_conf": 0.0, "breakdown_str": "N/A"
+        }
+
+    variant = p.get("model_variant", "yolov8n.pt")
+    model, device_str, display_device = load_deep_learning_model(variant)
+
+    if model is None:
+        cv2.putText(display, f"Failed to load {variant}", (20, 35),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2, cv2.LINE_AA)
+        return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), 0, "Model Load Failed", {
+            "latency_ms": 0.0, "device": display_device, "model_variant": variant,
+            "class_counts": {}, "avg_conf": 0.0, "max_conf": 0.0, "breakdown_str": "Load Error"
+        }
+
+    conf_thresh = float(p.get("conf", 0.35))
+    iou_thresh = float(p.get("iou", 0.45))
+    target_filter = p.get("filter", "All 80 COCO Classes")
+    show_labels = p.get("show_labels", True)
+
+    # Filter categories
+    allowed_indices = None
+    if target_filter.startswith("People & Faces"):
+        allowed_indices = {0}
+    elif target_filter.startswith("Vehicles"):
+        allowed_indices = {1, 2, 3, 4, 5, 6, 7, 8}
+    elif target_filter.startswith("Handheld Devices"):
+        allowed_indices = {62, 63, 64, 65, 66, 67, 73, 74, 76, 24, 25, 26, 39, 41}
+
+    # Run inference
+    t0 = time.time()
+    results = model(frame, conf=conf_thresh, iou=iou_thresh, device=device_str, verbose=False)[0]
+    inf_latency = (time.time() - t0) * 1000.0
+
+    boxes = results.boxes
+    valid_detections = []
+    class_counts = {}
+    confs = []
+
+    # Distinct tactical color palette for classes
+    PALETTE = [
+        (0, 255, 128),   # Spring Green (person)
+        (255, 165, 0),   # Orange
+        (0, 200, 255),   # Cyan
+        (255, 100, 255), # Magenta
+        (255, 255, 0),   # Yellow
+        (100, 150, 255), # Blue-Violet
+        (0, 255, 255),   # Electric Yellow
+        (255, 80, 80)    # Coral Red
+    ]
+
+    names = model.names if hasattr(model, "names") else {}
+
+    if boxes is not None and len(boxes) > 0:
+        for box in boxes:
+            cls_idx = int(box.cls[0].item())
+            if allowed_indices is not None and cls_idx not in allowed_indices:
+                continue
+
+            conf_val = float(box.conf[0].item())
+            x1, y1, x2, y2 = map(int, box.xyxy[0].tolist())
+            cls_name = names.get(cls_idx, f"cls_{cls_idx}")
+
+            class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+            confs.append(conf_val)
+            valid_detections.append((x1, y1, x2, y2, cls_idx, cls_name, conf_val))
+
+    # Render tactical bounding boxes
+    for (x1, y1, x2, y2, cls_idx, cls_name, conf_val) in valid_detections:
+        color = PALETTE[cls_idx % len(PALETTE)]
+        bw = x2 - x1
+        bh = y2 - y1
+
+        # Tactical bounding box
+        cv2.rectangle(display, (x1, y1), (x2, y2), color, 2)
+
+        # Tactical corner accents
+        c_len = max(8, int(min(bw, bh) * 0.15))
+        cv2.line(display, (x1, y1), (x1 + c_len, y1), (255, 255, 255), 2)
+        cv2.line(display, (x1, y1), (x1, y1 + c_len), (255, 255, 255), 2)
+        cv2.line(display, (x2, y1), (x2 - c_len, y1), (255, 255, 255), 2)
+        cv2.line(display, (x2, y1), (x2, y1 + c_len), (255, 255, 255), 2)
+        cv2.line(display, (x1, y2), (x1 + c_len, y2), (255, 255, 255), 2)
+        cv2.line(display, (x1, y2), (x1, y2 - c_len), (255, 255, 255), 2)
+        cv2.line(display, (x2, y2), (x2 - c_len, y2), (255, 255, 255), 2)
+        cv2.line(display, (x2, y2), (x2, y2 - c_len), (255, 255, 255), 2)
+
+        if show_labels:
+            label_txt = f"{cls_name} {int(conf_val * 100)}%"
+            (txt_w, txt_h), baseline = cv2.getTextSize(label_txt, cv2.FONT_HERSHEY_SIMPLEX, 0.45, 1)
+            # Filled header badge behind text
+            cv2.rectangle(display, (x1, max(0, y1 - txt_h - 6)), (x1 + txt_w + 6, max(0, y1)), color, -1)
+            cv2.putText(display, label_txt, (x1 + 3, max(txt_h + 2, y1 - 4)),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, (10, 15, 25), 1, cv2.LINE_AA)
+
+    count = len(valid_detections)
+    avg_conf = (sum(confs) / count) if count > 0 else 0.0
+    max_conf = max(confs) if count > 0 else 0.0
+
+    breakdown_list = [f"{k}: {v}" for k, v in class_counts.items()]
+    breakdown_str = ", ".join(breakdown_list) if breakdown_list else "None"
+
+    # Status overlay
+    if count > 0:
+        hud_label = f"YOLO: {count} Objects Locked ({breakdown_str}) | {inf_latency:.1f}ms"
+        cv2.putText(display, hud_label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 255, 128), 2, cv2.LINE_AA)
+    else:
+        hud_label = f"YOLO: Scanning Scene ({variant} on {display_device}) | {inf_latency:.1f}ms"
+        cv2.putText(display, hud_label, (20, 35), cv2.FONT_HERSHEY_SIMPLEX, 0.60, (0, 200, 255), 2, cv2.LINE_AA)
+
+    extra = {
+        "latency_ms": inf_latency,
+        "device": display_device,
+        "model_variant": variant,
+        "class_counts": class_counts,
+        "avg_conf": avg_conf,
+        "max_conf": max_conf,
+        "breakdown_str": breakdown_str
+    }
+
+    return cv2.cvtColor(display, cv2.COLOR_BGR2RGB), count, hud_label, extra
+
+
 # -----------------------------------------------------------------------------
 # Unified Algorithm Dispatcher
 # -----------------------------------------------------------------------------
@@ -787,6 +986,8 @@ def dispatch_filter(raw_frame, selected_module, p):
     elif selected_module.startswith("9."):
         proc_img, metric_val, tag = process_contours(raw_frame, p)
         extra = {"contours": metric_val}
+    elif selected_module.startswith("10."):
+        proc_img, metric_val, tag, extra = process_deep_learning(raw_frame, p)
     else:
         proc_img, tag = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2RGB), "Raw Pass-through"
     return proc_img, metric_val, tag, extra
@@ -884,6 +1085,19 @@ if cam_source.startswith("📸 Browser Camera Snapshot"):
                     <span>👤 Faces: <b style="color:#38BDF8;">{metric_val}</b></span>
                     <span>👁️ Eyes: <b style="color:#38BDF8;">{extra.get('eye_count', 0)}</b></span>
                     <span>📍 Center: <b>{extra.get('center', 'N/A')}</b></span>
+                </div>
+                """, unsafe_allow_html=True)
+            elif module.startswith("10."):
+                status_color = "#10B981" if metric_val > 0 else "#F59E0B"
+                status_text = f"🟢 {metric_val} OBJECTS LOCKED" if metric_val > 0 else "🟡 NO OBJECTS DETECTED"
+                breakdown = extra.get('breakdown_str', 'None')
+                st.markdown(f"""
+                <div style="background:#0F172A; border:1px solid #1E293B; border-radius:6px; padding:6px 12px; font-size:0.8rem; color:#E2E8F0; display:flex; justify-content:space-between; margin-top:-4px;">
+                    <span style="color:{status_color}; font-weight:700;">{status_text}</span>
+                    <span>🧠 Model: <b style="color:#38BDF8;">{extra.get('model_variant', 'YOLO')}</b></span>
+                    <span>⚡ Latency: <b style="color:#A78BFA;">{extra.get('latency_ms', 0.0):.1f} ms</b></span>
+                    <span>🎯 Classes: <b>{breakdown}</b></span>
+                    <span>💻 <b>{extra.get('device', 'CPU')}</b></span>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -1041,6 +1255,19 @@ else:
                     <span style="color:#38BDF8; font-weight:700;">📐 CONTOURS</span>
                     <span>Objects Extracted: <b style="color:#38BDF8;">{metric_val}</b></span>
                     <span>Min Area: <b>{params.get('min_area', 800)}px</b></span>
+                    <span style="color:#A78BFA; font-family:monospace;">⚡ {fps:.1f} FPS</span>
+                </div>
+                """, unsafe_allow_html=True)
+            elif module.startswith("10."):
+                status_color = "#10B981" if metric_val > 0 else "#F59E0B"
+                status_text = f"🟢 {metric_val} OBJECTS TRACKED" if metric_val > 0 else "🟡 SCANNING SCENE"
+                breakdown = extra.get('breakdown_str', 'None')
+                st_right_telemetry.markdown(f"""
+                <div style="background:#0F172A; border:1px solid #1E293B; border-radius:6px; padding:6px 12px; font-size:0.8rem; color:#E2E8F0; display:flex; justify-content:space-between; margin-top:-4px;">
+                    <span style="color:{status_color}; font-weight:700;">{status_text}</span>
+                    <span>🧠 Model: <b style="color:#38BDF8;">{extra.get('model_variant', 'YOLO')}</b></span>
+                    <span>⚡ Latency: <b style="color:#A78BFA;">{extra.get('latency_ms', 0.0):.1f} ms</b></span>
+                    <span>🎯 Objects: <b>{breakdown}</b></span>
                     <span style="color:#A78BFA; font-family:monospace;">⚡ {fps:.1f} FPS</span>
                 </div>
                 """, unsafe_allow_html=True)

@@ -39,7 +39,8 @@ flowchart TD
     subgraph S3 ["Stage 3: Algorithmic Transformation Pipelines"]
         direction TB
         DISPATCH --> DIP["Branch A: DIP Mathematical Foundations"]
-        DISPATCH --> CV["Branch B: Real-Time Computer Vision"]
+        DISPATCH --> CV["Branch B: Classical Computer Vision"]
+        DISPATCH --> DL["Branch C: Deep Learning Neural Perception"]
 
         %% DIP Modules
         subgraph S3_DIP ["DIP Modules (Modules 1 - 6)"]
@@ -59,6 +60,12 @@ flowchart TD
             CV --> M8["Multi-Face & Eye: Viola-Jones + EqualizeHist + Ensemble + NMS (IoU=0.35)"]
             CV --> M9["Contour Geometry: Suzuki-Abe Border Following + Moments (x̄, ȳ) + Convex Hull"]
         end
+
+        %% DL Modules
+        subgraph S3_DL ["Deep Learning (Module 10)"]
+            direction TB
+            DL --> M10["Object Detection: YOLOv8 / YOLO11 + PyTorch + Apple Metal (MPS) / CUDA"]
+        end
     end
 
     %% STAGE 4: PRESENTATION & TELEMETRY
@@ -66,9 +73,10 @@ flowchart TD
         direction TB
         S3_DIP --> RENDER["Dual Viewport Synchronous Renderer (30 FPS)"]
         S3_CV --> RENDER
+        S3_DL --> RENDER
         RENDER --> RAW_FEED["Left Viewport: Raw Ingested Camera Input"]
         RENDER --> PROC_FEED["Right Viewport: Live Processed Algorithm Output"]
-        RENDER --> HUD["Telemetry HUD: Real-Time FPS, Centroids, Face Count, Motion Index %"]
+        RENDER --> HUD["Telemetry HUD: Real-Time FPS, Latency ms, Centroids, Face & Object Counts"]
         RENDER --> GALLERY["Multi-Filter Gallery: 6 Core Algorithms Applied Simultaneously"]
     end
 ```
@@ -76,11 +84,12 @@ flowchart TD
 ### How to Explain This Flowchart to Your Professor (60-Second Walkthrough)
 
 1. **Point to Stage 1 (Top):** *"Professor, our pipeline starts with frame ingestion. Regardless of whether frames come from a live hardware camera or browser snapshot, we normalize the resolution to $640 \times 480$, apply a mirror flip for natural user interaction, and transpose the memory layout from OpenCV's native BGR to sRGB."*
-2. **Point to Stage 2 (Middle-Left):** *"Next, the frame enters our central `dispatch_filter()` engine, which couples the incoming image with runtime parameters dynamically tuned via the sidebar sliders (like Gaussian kernel size or Canny thresholds) and pre-cached Haar feature trees."*
-3. **Point to Stage 3 (Middle):** *"The engine routes the frame into one of two algorithmic branches:  
+2. **Point to Stage 2 (Middle-Left):** *"Next, the frame enters our central `dispatch_filter()` engine, which couples the incoming image with runtime parameters dynamically tuned via the sidebar sliders (like Gaussian kernel size, Canny thresholds, or YOLO confidence cutoffs) and pre-cached model weights."*
+3. **Point to Stage 3 (Middle):** *"The engine routes the frame into one of three algorithmic paradigms:  
    - **Branch A (DIP Foundations):** Evaluates mathematical transformations (Rec. 601 Luma, separable Gaussian convolution, Canny 5-stage hysteresis, Otsu variance maximization, morphology, and CLAHE).  
-   - **Branch B (Computer Vision):** Executes higher-level perception—temporal motion detection using a running background model, multi-subject face and eye localization using Viola-Jones with NMS deduplication, and contour boundary extraction with spatial image moments."*
-4. **Point to Stage 4 (Bottom):** *"Finally, both the raw camera feed and the processed output are rendered side-by-side at 30 FPS alongside live telemetry showing FPS, centroids, and detection metrics."*
+   - **Branch B (Classical Computer Vision):** Executes classical perception—temporal motion detection using a running background model, multi-subject face and eye localization using Viola-Jones with NMS deduplication, and contour boundary extraction with spatial image moments.  
+   - **Branch C (Deep Learning Neural Perception):** Executes modern neural object detection using single-stage YOLO (YOLOv8/YOLO11) powered by PyTorch with Apple Silicon Metal GPU acceleration (MPS) or CUDA, comparing modern learned tensor features against classical handcrafted Haar wavelets."*
+4. **Point to Stage 4 (Bottom):** *"Finally, both the raw camera feed and the processed output are rendered side-by-side at 30 FPS alongside live telemetry showing inference latency in ms, FPS, centroids, and detection breakdowns."*
 
 ---
 
@@ -120,10 +129,19 @@ flowchart TD
 - **Contour Analysis & Geometric Shape Extraction**:
   - Border traversal, area/perimeter computation, bounding rectangle fitting, and convex hull generation.
 
-### 3. Core Capabilities
+### 3. Modern Deep Learning Neural Perception (Module 10)
+- **Real-Time Single-Stage Object Detection (YOLOv8 / YOLO11 & PyTorch)**:
+  - Deep convolutional feature hierarchy with CSPDarknet/C2f backbone and PANet feature pyramid.
+  - Multi-task loss formulation: Complete IoU ($\mathcal{L}_{\text{CIoU}}$), Distribution Focal Loss ($\mathcal{L}_{\text{DFL}}$), and Binary Cross-Entropy ($\mathcal{L}_{\text{BCE}}$).
+  - Hardware Acceleration: Native Apple Silicon Metal GPU acceleration (`device='mps'`) and NVIDIA CUDA with graceful CPU fallback.
+  - Interactive Parameter Tuning: Dynamic confidence threshold slider ($0.10 \dots 0.95$), IoU NMS overlap slider ($0.10 \dots 0.85$), and target category filters (All 80 COCO classes, People & Faces, Vehicles, Electronics).
+  - Real-Time HUD Telemetry: Sub-millisecond tensor latency metrics (~$13\text{ ms}$ on Apple Metal), architecture variant badge, and per-class object counter.
+
+### 4. Core Capabilities
 - **Side-by-Side Comparative View**: Displays the live raw webcam feed on the left and the processed DIP filter on the right.
 - **Mathematical Theory Foundations**: Collapsible panel displaying KaTeX formulas and theoretical explanations for each technique.
 - **Dual Stream Ingestion**: Live laptop webcam (`cv2.VideoCapture(0)`) with automatic fallback to an offline synthetic moving generator if the webcam is blocked or unavailable.
+- **Classical vs. Deep Learning Benchmark**: Direct, head-to-head comparison between classical handcrafted Haar feature cascades and modern deep convolutional neural networks.
 
 ---
 
