@@ -1,172 +1,147 @@
-# GuardVision Lab: Interactive Digital Image Processing (DIP) & Computer Vision (CV) Studio
+# Real-Time Deep Learning & Computer Vision Inspection System
 
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Streamlit: 1.40+](https://img.shields.io/badge/Streamlit-1.40%2B-FF4B4B.svg)](https://streamlit.io/)
-[![OpenCV: 4.x](https://img.shields.io/badge/OpenCV-4.x-green.svg)](https://opencv.org/)
+[![OpenCV: 4.10](https://img.shields.io/badge/OpenCV-4.10-green.svg)](https://opencv.org/)
+[![PyTorch: 2.2+](https://img.shields.io/badge/PyTorch-2.2%2B-EE4C2C.svg)](https://pytorch.org/)
+[![YOLOv8: Ultralytics](https://img.shields.io/badge/YOLOv8-Ultralytics-00FFFF.svg)](https://docs.ultralytics.com/)
 
-An interactive, real-time Computer Vision and Digital Image Processing engineering studio built with **Python, Streamlit, and OpenCV**. Featuring live webcam ingestion, dynamic algorithm parameter tuning, side-by-side comparative visualization, mathematical theory, and real-time computer vision analysis.
+A high-performance, real-time Computer Vision inspection and demonstration workbench built with **Streamlit, OpenCV, and PyTorch/YOLO**. The system implements a hybrid processing pipeline that bridges classical Digital Image Processing (DIP) techniques with modern Deep Learning (CNN) object detection for live webcam streams.
 
 ---
 
-## System Architecture & Pipeline Flowchart
+## 1. System Architecture & Data Flow
 
-Use this diagram to trace the complete end-to-end dataflow from raw physical sensor input through mathematical transformations to real-time visualization:
+The application captures frames from a hardware webcam or browser camera, normalizes spatial dimensions, and routes the signal through either a classical pixel-level DIP pipeline or a deep neural tensor engine:
+
+```
+[ Laptop Webcam ] ───> [ Frame Ingestion ] ───> [ Mode Selector ]
+                                                      ├──> [ Classical CV / DIP Filters ]
+                                                      └──> [ Deep Learning Engine (YOLO) ]
+                                                               │
+                                                               ▼
+                                                        [ Streamlit Web UI ]
+```
+
+### End-to-End Pipeline Flowchart
 
 ```mermaid
 flowchart TD
-    %% STAGE 1: INGESTION
-    subgraph S1 ["Stage 1: Hardware Ingestion & Normalization"]
-        direction TB
-        CAM["Live Hardware Camera (cv2.VideoCapture)"] --> FRAME["Raw Sensor Frame (H x W x 3)"]
-        SNAP["Browser Snapshot (HTML5 Camera Input)"] --> FRAME
-        SYNTH["Synthetic Moving Fallback Generator"] -.->|Auto-Fallback| FRAME
-        FRAME --> RESIZE["Standardize Resolution to 640 x 480"]
-        RESIZE --> FLIP["Mirror View (Horizontal Flip: cv2.flip)"]
-        FLIP --> SWAP["Color Transposition: BGR to RGB (cv2.cvtColor)"]
-    end
-
-    %% STAGE 2: CONTROL & DISPATCH
-    subgraph S2 ["Stage 2: Dynamic Control & Dispatch Engine"]
-        direction TB
-        SIDEBAR["Sidebar Controls (Kernel, Sigma, Threshold Sliders)"] --> PARAMS["Runtime Parameters Dict (p)"]
-        MODELS["Offline XML Trees (models/haarcascades/)"] --> CACHE["Cached Resource (@st.cache_resource)"]
-        SWAP --> DISPATCH["Central Dispatcher: dispatch_filter(frame, module, params)"]
-        PARAMS --> DISPATCH
-        CACHE --> DISPATCH
-    end
-
-    %% STAGE 3: MATHEMATICAL PIPELINE BRANCHING
-    subgraph S3 ["Stage 3: Algorithmic Transformation Pipelines"]
-        direction TB
-        DISPATCH --> DIP["Branch A: DIP Mathematical Foundations"]
-        DISPATCH --> CV["Branch B: Classical Computer Vision"]
-        DISPATCH --> DL["Branch C: Deep Learning Neural Perception"]
-
-        %% DIP Modules
-        subgraph S3_DIP ["DIP Modules (Modules 1 - 6)"]
-            direction TB
-            DIP --> M1["Color Spaces: Rec. 601 Grayscale, HSV Decoupling, CIELAB"]
-            DIP --> M2["Spatial 2D Filters: Separable Gaussian O(2K), Median, Bilateral"]
-            DIP --> M3["Edge Operators: Canny 5-Stage Hysteresis, Sobel, Laplacian"]
-            DIP --> M4["Segmentation: Global Cutoff, Otsu Variance σ_B², Adaptive Gaussian"]
-            DIP --> M5["Morphology: Erosion ⊖, Dilation ⊕, Opening, Closing, Gradient"]
-            DIP --> M6["Contrast: Global HE (CDF Transfer), CLAHE (Tile Clipping)"]
-        end
-
-        %% CV Modules
-        subgraph S3_CV ["CV Applications (Modules 7 - 9)"]
-            direction TB
-            CV --> M7["Motion Detection: Running Background Model B_t = (1-α)B_t-1 + αI_t"]
-            CV --> M8["Multi-Face & Eye: Viola-Jones + EqualizeHist + Ensemble + NMS (IoU=0.35)"]
-            CV --> M9["Contour Geometry: Suzuki-Abe Border Following + Moments (x̄, ȳ) + Convex Hull"]
-        end
-
-        %% DL Modules
-        subgraph S3_DL ["Deep Learning (Module 10)"]
-            direction TB
-            DL --> M10["Object Detection: YOLOv8 / YOLO11 + PyTorch + Apple Metal (MPS) / CUDA"]
-        end
-    end
-
-    %% STAGE 4: PRESENTATION & TELEMETRY
-    subgraph S4 ["Stage 4: Synchronous Presentation & Telemetry HUD"]
-        direction TB
-        S3_DIP --> RENDER["Dual Viewport Synchronous Renderer (30 FPS)"]
-        S3_CV --> RENDER
-        S3_DL --> RENDER
-        RENDER --> RAW_FEED["Left Viewport: Raw Ingested Camera Input"]
-        RENDER --> PROC_FEED["Right Viewport: Live Processed Algorithm Output"]
-        RENDER --> HUD["Telemetry HUD: Real-Time FPS, Latency ms, Centroids, Face & Object Counts"]
-        RENDER --> GALLERY["Multi-Filter Gallery: 6 Core Algorithms Applied Simultaneously"]
-    end
+    A["🎥 Laptop Webcam / Browser Camera"] --> B["📥 Frame Ingestion & Normalization (640x480, BGR to RGB)"]
+    B --> C{"🎛️ Mode Selector"}
+    
+    C -->|Classical Route| D["🔬 Classical DIP & CV Filters"]
+    D --> D1["Color Spaces (Rec. 601 Grayscale, HSV, LAB)"]
+    D --> D2["Spatial Filters (Gaussian Blur, Bilateral)"]
+    D --> D3["Edge Detectors (Canny, Sobel, Laplacian)"]
+    D --> D4["Segmentation (Otsu Variance, Adaptive)"]
+    D --> D5["Morphology & Histograms (Erosion, CLAHE)"]
+    D --> D6["Face Localization (Viola-Jones Haar Cascades)"]
+    
+    C -->|Deep Learning Route| E["🧠 Deep Learning Engine (Ultralytics YOLOv8)"]
+    E --> E1["Backbone: CSPDarknet / C2f (Spatial Feature Hierarchy)"]
+    E --> E2["Neck: PANet (Multi-Scale Feature Aggregation)"]
+    E --> E3["Head: Anchor-Free Decoupled Output (Class & Box Regressors)"]
+    E --> E4["Hardware Acceleration: Apple Metal (MPS) / NVIDIA CUDA"]
+    
+    D --> F["🖥️ Streamlit Synchronous Web Interface"]
+    E --> F
+    F --> G["📊 Live Telemetry HUD (FPS, Latency ms, Object Counts, Centroids)"]
 ```
 
-### How to Explain This Flowchart to Your Professor (60-Second Walkthrough)
+---
 
-1. **Point to Stage 1 (Top):** *"Professor, our pipeline starts with frame ingestion. Regardless of whether frames come from a live hardware camera or browser snapshot, we normalize the resolution to $640 \times 480$, apply a mirror flip for natural user interaction, and transpose the memory layout from OpenCV's native BGR to sRGB."*
-2. **Point to Stage 2 (Middle-Left):** *"Next, the frame enters our central `dispatch_filter()` engine, which couples the incoming image with runtime parameters dynamically tuned via the sidebar sliders (like Gaussian kernel size, Canny thresholds, or YOLO confidence cutoffs) and pre-cached model weights."*
-3. **Point to Stage 3 (Middle):** *"The engine routes the frame into one of three algorithmic paradigms:  
-   - **Branch A (DIP Foundations):** Evaluates mathematical transformations (Rec. 601 Luma, separable Gaussian convolution, Canny 5-stage hysteresis, Otsu variance maximization, morphology, and CLAHE).  
-   - **Branch B (Classical Computer Vision):** Executes classical perception—temporal motion detection using a running background model, multi-subject face and eye localization using Viola-Jones with NMS deduplication, and contour boundary extraction with spatial image moments.  
-   - **Branch C (Deep Learning Neural Perception):** Executes modern neural object detection using single-stage YOLO (YOLOv8/YOLO11) powered by PyTorch with Apple Silicon Metal GPU acceleration (MPS) or CUDA, comparing modern learned tensor features against classical handcrafted Haar wavelets."*
-4. **Point to Stage 4 (Bottom):** *"Finally, both the raw camera feed and the processed output are rendered side-by-side at 30 FPS alongside live telemetry showing inference latency in ms, FPS, centroids, and detection breakdowns."*
+## 2. Core Modules & Technologies Explained Simply
+
+### 1. Streamlit Frontend
+- **Role:** Lightweight, interactive graphical user interface.
+- **How it works:** Provides reactive sidebar sliders and dropdown menus allowing users to dynamically adjust algorithm parameters (such as Gaussian kernel size, Canny thresholds, or YOLO confidence cutoffs) and view live side-by-side video feeds without re-compiling code.
+
+### 2. OpenCV & Digital Image Processing (DIP)
+- **Role:** Deterministic, pixel-level mathematical operations.
+- **Key Techniques:**
+  - **Color Spaces:** Converts BGR to Grayscale via ITU-R Rec. 601 luma weighting ($Y = 0.299R + 0.587G + 0.114B$) and HSV for lighting-invariant color tracking.
+  - **Spatial Filtering:** Gaussian Blur 2D separable convolution ($G(x,y)$) for noise suppression; Bilateral filter for edge-preserving smoothing.
+  - **Edge Detection:** Multi-stage Canny operator (Gaussian smooth $\to$ gradient magnitude $\to$ non-maximum suppression $\to$ dual-threshold hysteresis).
+  - **Segmentation & Morphology:** Otsu’s bimodal thresholding maximizing between-class variance ($\sigma_B^2$); morphological opening and closing to eliminate noise artifacts.
+  - **Classical Object Localization:** Viola-Jones AdaBoost cascade classifiers using Integral Images for rapid facial feature detection in $\mathcal{O}(1)$ time.
+
+### 3. Deep Learning Engine (Ultralytics YOLO & PyTorch)
+- **Role:** Modern semantic object detection, bounding box regression, and classification.
+- **How it works:** Uses a single-stage Convolutional Neural Network (CNN) that inspects the entire frame in one forward tensor pass. The network predicts bounding box coordinates and class probabilities across 80 COCO categories simultaneously, without needing separate region proposal passes.
 
 ---
 
-## Key Features & Demonstration Modules
+## 3. Professor Defense & Evaluation Cheatsheet
 
-### 1. Digital Image Processing (DIP) Fundamentals
-- **Color Space Conversions**:
-  - RGB to Grayscale (Rec. 601 luma weighting: $Y = 0.299R + 0.587G + 0.114B$).
-  - HSV Color Space with individual Hue, Saturation, and Value channel inspection.
-  - CIELAB Perceptual Color Space ($L^*$, $a^*$, $b^*$).
-  - YCrCb Digital Video Encoding.
-- **Spatial 2D Filtering & Smoothing**:
-  - **Gaussian Blur**: 2D Gaussian kernel with interactive kernel size ($3 \dots 35$) and standard deviation ($\sigma$).
-  - **Median Blur**: Non-linear ranking filter for salt-and-pepper impulse noise removal.
-  - **Bilateral Filter**: Non-linear, edge-preserving smoothing combining spatial closeness with radiometric photometric similarity.
-  - **Spatial Sharpening**: High-pass filter kernel boosting edge gradients.
-- **Edge Detection & Gradient Operators**:
-  - **Canny Edge Detector**: Full 4-stage pipeline (Gaussian smooth, gradient magnitude/angle, Non-Maximum Suppression, hysteresis thresholding with dual sliders).
-  - **Sobel Operator**: First-order derivative filters ($G_x$ vertical edges, $G_y$ horizontal edges, combined gradient magnitude $\sqrt{G_x^2 + G_y^2}$).
-  - **Laplacian Operator**: Second-order isotropic derivative filter highlighting rapid intensity discontinuities.
-- **Image Segmentation & Thresholding**:
-  - **Global Binary Thresholding**: Interactive threshold cutoff ($T \in [0, 255]$) with inverted binary masking.
-  - **Otsu’s Optimal Thresholding**: Automatic threshold calculation via between-class variance maximization ($\sigma_B^2$).
-  - **Adaptive Gaussian Thresholding**: Local neighborhood thresholding for uneven illumination.
-- **Mathematical Morphology**:
-  - Dilation, Erosion, Morphological Opening, Closing, and Morphological Gradient with customizable structuring elements (Rectangle, Ellipse, Cross) and iterations.
-- **Contrast & Histograms**:
-  - CLAHE (Contrast Limited Adaptive Histogram Equalization) preventing noise over-amplification.
-  - Global Histogram Equalization.
+Use this quick-reference guide during oral defense, viva voce, or laboratory evaluation:
 
-### 2. Computer Vision (CV) Applications
-- **Real-Time Temporal Motion Detection**:
-  - Consecutive frame differencing ($\Delta I_t = |I_t - I_{t-1}| > \theta$) with thresholding, morphological noise suppression, contour grouping, and dynamic green/red bounding boxes.
-  - Real-time **"Motion Activity Index (%)"** progress bar and metric.
-- **Multi-Subject Face & Eye Localization**:
-  - Real-time simultaneous multi-face detection using ensembled Haar Cascades with NMS, histogram equalization, center coordinates, and eye tracking.
-- **Contour Analysis & Geometric Shape Extraction**:
-  - Border traversal, area/perimeter computation, bounding rectangle fitting, and convex hull generation.
+### 1. How Convolutional Layers Extract Spatial Features
+* **Low-Level Layers:** Early convolution kernels act similarly to Sobel filters, computing spatial gradients to extract basic lines, sharp edges, and color transitions.
+* **Mid-Level Layers:** Intermediate feature maps combine simple edges into geometric textures, corners, and localized shapes.
+* **High-Level Layers:** Deep layers assemble textures into complex semantic object representations (e.g., eyes, wheels, faces, keyboards) that are robust to rotation, scale, and illumination changes.
 
-### 3. Modern Deep Learning Neural Perception (Module 10)
-- **Real-Time Single-Stage Object Detection (YOLOv8 / YOLO11 & PyTorch)**:
-  - Deep convolutional feature hierarchy with CSPDarknet/C2f backbone and PANet feature pyramid.
-  - Multi-task loss formulation: Complete IoU ($\mathcal{L}_{\text{CIoU}}$), Distribution Focal Loss ($\mathcal{L}_{\text{DFL}}$), and Binary Cross-Entropy ($\mathcal{L}_{\text{BCE}}$).
-  - Hardware Acceleration: Native Apple Silicon Metal GPU acceleration (`device='mps'`) and NVIDIA CUDA with graceful CPU fallback.
-  - Interactive Parameter Tuning: Dynamic confidence threshold slider ($0.10 \dots 0.95$), IoU NMS overlap slider ($0.10 \dots 0.85$), and target category filters (All 80 COCO classes, People & Faces, Vehicles, Electronics).
-  - Real-Time HUD Telemetry: Sub-millisecond tensor latency metrics (~$13\text{ ms}$ on Apple Metal), architecture variant badge, and per-class object counter.
+### 2. Traditional Pixel-Differencing vs. Deep Neural Detection
+| Feature | Traditional Pixel-Differencing (Module 7) | Deep Neural Detection (Module 10 - YOLO) |
+|---|---|---|
+| **Mechanism** | Temporal subtraction: $\Delta I_t = |I_t - I_{t-1}| > \theta$ | Multi-scale convolutional tensor evaluation |
+| **Detection Scope** | Detects **any moving pixels** (cannot identify what the object is) | Recognizes **specific object categories** (stationary or moving) |
+| **Environmental Robustness** | Easily triggered by light flickers, shadows, and camera shake | Invariant to lighting changes, shadows, and background movement |
+| **Semantic Awareness** | None (only pixel coordinates of active motion clusters) | Full classification across 80 classes with confidence percentages |
 
-### 4. Core Capabilities
-- **Side-by-Side Comparative View**: Displays the live raw webcam feed on the left and the processed DIP filter on the right.
-- **Mathematical Theory Foundations**: Collapsible panel displaying KaTeX formulas and theoretical explanations for each technique.
-- **Dual Stream Ingestion**: Live laptop webcam (`cv2.VideoCapture(0)`) with automatic fallback to an offline synthetic moving generator if the webcam is blocked or unavailable.
-- **Classical vs. Deep Learning Benchmark**: Direct, head-to-head comparison between classical handcrafted Haar feature cascades and modern deep convolutional neural networks.
+### 3. Classical Viola-Jones vs. Deep Learning (YOLOv8)
+| Criterion | Viola-Jones Haar Cascades (Module 8) | YOLOv8 Deep Learning (Module 10) |
+|---|---|---|
+| **Feature Type** | Handcrafted rectangular Haar-like intensity sums | Learned hierarchical convolutional feature maps |
+| **Computation** | Evaluated via Integral Image in $\mathcal{O}(1)$ time on CPU | Matrix/tensor operations accelerated on GPU (Apple Metal MPS / CUDA) |
+| **Pose Tolerance** | Strictly upright, frontal faces ($< 15^\circ$ tilt) | Arbitrary rotations, 3D poses, and extreme viewing angles |
+| **Occlusion Robustness** | Easily broken if key landmarks (eyes/nose bridge) are blocked | Maintains high detection recall under heavy partial occlusions |
+
+### 4. Real-Time Performance & Latency Telemetry
+- **Hardware Acceleration:** Native Apple Silicon Metal Performance Shaders (`device='mps'`) or NVIDIA CUDA.
+- **Steady-State Latency:** **$12.9\text{ ms} - 16.5\text{ ms}$** per frame for YOLOv8 Nano (`yolov8n.pt`).
+- **Throughput:** ~**60–75 FPS** tensor throughput, ensuring smooth real-time performance at 30 FPS webcam capture rate.
 
 ---
 
-## Quickstart Guide
+## 4. Quick-Start Guide
 
-### 1. Installation
+### Prerequisites
+- Python 3.10, 3.11, 3.12, or 3.13
+- A standard laptop webcam
 
-Clone or open the project folder in your terminal:
+### 1. Clone & Set Up Virtual Environment
 
 ```bash
-# 1. Create and activate a Python virtual environment
+# Clone the repository
+git clone https://github.com/Haus-Nous/guardvision-ai.git
+cd guardvision-ai
+
+# Create and activate virtual environment
 python3 -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```
 
-# 2. Install dependencies
+### 2. Install Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 2. Launch the Application Locally
-
-Run this command:
+### 3. Run the Application
 
 ```bash
 streamlit run app.py
 ```
 
-The application will immediately launch in your browser at:
+The application will launch in your default browser at:  
 👉 **[http://localhost:8501](http://localhost:8501)**
+
+---
+
+## 5. Supplementary Academic Documentation
+
+For complete theoretical derivations, viva voce Q&A, and systemic flowcharts, consult the project knowledge assets:
+
+- 📘 **[VIVA_QUESTIONS_AND_ANSWERS.md](VIVA_QUESTIONS_AND_ANSWERS.md)**: 35 curated viva examination questions and model answers covering both DIP mathematics and deep learning theory.
+- 🗺️ **[KNOWLEDGE_GRAPH.md](KNOWLEDGE_GRAPH.md)**: Master architectural knowledge graph and 3-minute oral defense script for faculty evaluation.
